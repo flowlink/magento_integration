@@ -11,7 +11,7 @@ gem 'capistrano'
 gem 'honeybadger'
 
 group :development do
-  gem "rake"
+  gem 'rake', '~> 10.3.2'
 end
 
 group :test do

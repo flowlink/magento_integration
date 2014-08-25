@@ -124,7 +124,7 @@ DEPENDENCIES
   foreman
   honeybadger
   rack-test
-  rake
+  rake (~> 10.3.2)
   rspec (~> 2.14)
   savon (~> 2.0)
   sinatra

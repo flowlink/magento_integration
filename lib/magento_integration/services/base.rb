@@ -5,29 +5,29 @@ module MagentoIntegration
     class Base
       attr_reader :config
       attr_reader :client
-      attr_reader :session
+      attr_accessor :session
 
       def initialize(config)
         @config = config
         
-        @client = Savon.client(wsdl: "http://127.0.0.1/magento/index.php/api/v2_soap?wsdl")
-        
+        @client = Savon.client(wsdl: "#{@config[:store_url]}/index.php/api/v2_soap?wsdl", :log => false)
+
         login
       end
       
       def login
-        response = @client.call(:login, message: { :username => 'wombat', :apiKey => 'p@ssw0rd' } )
+        response = @client.call(:login, message: { :username => @config[:api_username], :apiKey => @config[:api_key] } )
         # TODO catch access failed
 
-        @session = response.body[:login_response][:login_return];
+        @session = response.body[:login_response][:login_return]
       end
       
       def call(method, arguments = {})
-        arguments[:session] = @session
-      
+        arguments.merge!( :session_id => @session )
+
         response = @client.call(method, message: arguments )
-        
-        return response;
+
+        return response
       end
     end
   end
