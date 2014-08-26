@@ -39,6 +39,21 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
     end
   end
 
+  post '/cancel_order' do
+    begin
+      order = MagentoIntegration::Order.new(@config)
+      status = order.cancel_order(@payload)
+
+      if status
+        result 200, "Order has been succcessfuly canceled"
+      else
+        result 500, "Error while trying to cancel the order"
+      end
+    rescue => e
+      result 500, "Unable to get orders from Magento. Error: #{e.message}"
+    end
+  end
+
   post '/add_shipment' do
     begin
       order = MagentoIntegration::Order.new(@config)

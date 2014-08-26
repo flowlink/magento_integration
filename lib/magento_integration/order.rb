@@ -19,6 +19,8 @@ module MagentoIntegration
 
         orderResponse = @soapClient.call :sales_order_info, { :order_increment_id => order[:increment_id] }
 
+        puts orderResponse
+
         order = orderResponse.body[:sales_order_info_response][:result]
 
         orderTotal = {
@@ -75,7 +77,14 @@ module MagentoIntegration
       wombatOrders
     end
 
+    def cancel_order(payload)
+      order_response = @soapClient.call :sales_order_cancel, { :order_increment_id => payload[:order][:id] }
+
+      order_response.body[:sales_order_cancel_response][:result]
+    end
+
     def add_shipment(payload)
+
       order_response = @soapClient.call :sales_order_info, { :order_increment_id => payload[:shipment][:order_id] }
 
       order = order_response.body[:sales_order_info_response][:result]
@@ -114,7 +123,29 @@ module MagentoIntegration
                             :email => 1
                           }
 
-      return shipment_increment_id[:sales_order_shipment_create_response]
+      shipment_increment_id = shipment_increment_id.body[:sales_order_shipment_create_response][:shipment_increment_id]
+
+      carrier_code = false
+      shipping_method = payload[:shipment][:shipping_method].downcase
+      if shipping_method.include? 'dhl'
+        carrier_code = 'dhlint'
+      elsif shipping_method.include? 'ups' or shipping_method.include? 'united parcel service'
+        carrier_code = 'ups'
+      elsif shipping_method.include? 'usps' or shipping_method.include? 'united states postal service'
+        carrier_code = 'usps'
+      elsif shipping_method.include? 'fedex' or shipping_method.include? 'federal express'
+        carrier_code = 'fedex'
+      end
+        if carrier_code
+          @soapClient.call :sales_order_shipment_add_track, {
+              :shipment_increment_id => shipment_increment_id,
+              :carrier => carrier_code,
+              :title => payload[:shipment][:shipping_method],
+              :track_number => payload[:shipment][:tracking]
+          }
+      end
+
+      shipment_increment_id
     end
 
     private
