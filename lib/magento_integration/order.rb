@@ -2,10 +2,6 @@ require 'json'
 
 module MagentoIntegration
   class Order < Base
-
-    def initialize(config)
-      super(config)
-    end
     
     def get_orders
       #shipment_carriers = @soapClient.call :sales_order_shipment_get_carriers, { :order_increment_id => '100000001' }
@@ -18,8 +14,6 @@ module MagentoIntegration
       orders[:sales_order_list_response][:result][:item].each do |order|
 
         orderResponse = @soapClient.call :sales_order_info, { :order_increment_id => order[:increment_id] }
-
-        puts orderResponse
 
         order = orderResponse.body[:sales_order_info_response][:result]
 
