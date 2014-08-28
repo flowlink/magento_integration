@@ -83,8 +83,6 @@ module MagentoIntegration
         end
       else
         wombat_product[:stock_data] = {
-          :qty => payload[:product][:quantity],
-          :is_in_stock => (payload[:product][:quantity].to_f > 0) ? 1 : 0,
           :use_config_manage_stock => 1,
           :use_config_min_qty => 1,
           :use_config_min_sale_qty => 1,
@@ -92,6 +90,10 @@ module MagentoIntegration
           :use_config_backorders => 1,
           :use_config_notify_stock_qty => 1
         }
+        if payload[:product][:quantity]
+          wombat_product[:stock_data][:qty] => payload[:product][:quantity]
+          wombat_product[:stock_data][:is_in_stock] => (payload[:product][:quantity].to_f > 0) ? 1 : 0
+        end
 
 
         if !update
