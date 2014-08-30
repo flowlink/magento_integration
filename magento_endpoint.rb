@@ -100,8 +100,8 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
   
   post '/set_inventory' do
     begin
-      order = MagentoIntegration::Order.new(get_client(@config))
-      status = order.set_inventory(@payload)
+      product = MagentoIntegration::Product.new(get_client(@config))
+      status = product.set_inventory(@payload)
 
       if status
         result 200, "Inventory successfully set"
