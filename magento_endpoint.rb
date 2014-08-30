@@ -107,6 +107,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
         result 200, "Inventory successfully set"
       else
         result 500, "Error while trying to set inventory"
+	  end
     rescue => e
       result 500, "Unable to set inventory details inside Magento. Error: #{e.message}"
     end
