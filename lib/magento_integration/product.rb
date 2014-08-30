@@ -91,8 +91,8 @@ module MagentoIntegration
           :use_config_notify_stock_qty => 1
         }
         if payload[:product][:quantity]
-          wombat_product[:stock_data][:qty] => payload[:product][:quantity]
-          wombat_product[:stock_data][:is_in_stock] => (payload[:product][:quantity].to_f > 0) ? 1 : 0
+          wombat_product[:stock_data][:qty] = payload[:product][:quantity]
+          wombat_product[:stock_data][:is_in_stock] = (payload[:product][:quantity].to_f > 0) ? 1 : 0
         end
 
 
