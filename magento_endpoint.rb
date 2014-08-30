@@ -97,6 +97,20 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
       result 500, "Unable to send product to Magento. Error: #{e.message}"
     end
   end
+  
+  post '/set_inventory' do
+    begin
+      order = MagentoIntegration::Order.new(get_client(@config))
+      status = order.set_inventory(@payload)
+
+      if status
+        result 200, "Inventory successfully set"
+      else
+        result 500, "Error while trying to set inventory"
+    rescue => e
+      result 500, "Unable to set inventory details inside Magento. Error: #{e.message}"
+    end
+  end
 
   private
 

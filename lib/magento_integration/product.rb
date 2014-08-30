@@ -117,6 +117,21 @@ module MagentoIntegration
       return true
     end
 
+	def set_inventory(payload)
+	  product = {
+	    :stock_data => {
+		    :qty => payload[:inventory][:quantity]
+		}
+	  }
+	  
+	  result = @soapClient.call :catalog_product_update, {
+                  :type => 'simple',
+                  :product => payload[:inventory][:product_id],
+                  :product_data => product
+			    }
+	  return result
+	end
+	
     private
 
     def get_attribute_sets
