@@ -79,7 +79,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
         result 500, "Error while trying to send product to Magento"
       end
     rescue => e
-      result 500, "Unable to send product to Magento. Error: #{e.message} #{e.backtrace}"
+      result 500, "Unable to send product to Magento. Error: #{e.message}"
     end
   end
 

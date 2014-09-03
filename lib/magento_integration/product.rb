@@ -137,13 +137,25 @@ module MagentoIntegration
     def get_attribute_set
       response = @soapClient.call :catalog_product_attribute_set_list
 
-      return response.body[:catalog_product_attribute_set_list_response][:result][:item][0]
+      attribute_sets = response.body[:catalog_product_attribute_set_list_response][:result][:item]
+
+      if attribute_sets.kind_of?(Array)
+        return attribute_sets[0]
+      else
+        return attribute_sets
+      end
     end
 
     def get_store
       response = @soapClient.call :store_list
 
-      return response.body[:store_list_response][:stores][:item][0]
+      stores = response.body[:store_list_response][:stores][:item]
+
+      if stores.kind_of?(Array)
+        return stores[0]
+      else
+        return stores
+      end
     end
   end
 end
