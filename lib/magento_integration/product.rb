@@ -100,8 +100,8 @@ module MagentoIntegration
           result = @soapClient.call :catalog_product_create, {
               :type => 'simple',
               :set => attribute_set_id,
-              :sku => variant[:sku],
-              :product_data => variant_product
+              :sku => payload[:product][:sku],
+              :product_data => wombat_product
           }
         else
           result = @soapClient.call :catalog_product_update, {
