@@ -4,12 +4,12 @@ module MagentoIntegration
   class Product < Base
     
     def add_product(payload, update)
-      attribute_sets = get_attribute_sets
-      websites = get_stores
+      attribute_set = get_attribute_set
+      website = get_store
 
       wombat_product = {
         :categories => payload[:product][:taxons],
-        :websites => [websites[0][:website_id]],
+        :websites => [website[:website_id]],
         :name => payload[:product][:name],
         :description => payload[:product][:description],
         :status => 2,
@@ -67,7 +67,7 @@ module MagentoIntegration
           if !update
             result = @soapClient.call :catalog_product_create, {
               :type => 'simple',
-              :set => attribute_sets[0][:set_id],
+              :set => attribute_set[:set_id],
               :sku => variant[:sku],
               :product_data => variant_product
             }
@@ -99,7 +99,7 @@ module MagentoIntegration
         if !update
           result = @soapClient.call :catalog_product_create, {
               :type => 'simple',
-              :set => attribute_sets[0][:set_id],
+              :set => attribute_set[:set_id],
               :sku => payload[:product][:sku],
               :product_data => wombat_product
           }
@@ -134,16 +134,16 @@ module MagentoIntegration
 	
     private
 
-    def get_attribute_sets
+    def get_attribute_set
       response = @soapClient.call :catalog_product_attribute_set_list
 
-      return response.body[:catalog_product_attribute_set_list_response][:result][:item]
+      return response.body[:catalog_product_attribute_set_list_response][:result][:item][0]
     end
 
-    def get_stores
+    def get_store
       response = @soapClient.call :store_list
 
-      return response.body[:store_list_response][:stores][:item]
+      return response.body[:store_list_response][:stores][:item][0]
     end
   end
 end
