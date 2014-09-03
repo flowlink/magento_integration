@@ -48,6 +48,19 @@ module MagentoIntegration
           :discount => orderTotal[:discount]
         })
 
+        placed_date = Date.parse(order[:created_at])
+        upated_date = Date.parse(order[:updated_at])
+
+#        payments = Array.new
+#        order[:payment].each do |payment|
+#          puts payment
+#          payments.push({
+#            :number => payment[:payment_id],
+#            :status => (payment[:amount_paid].present? && (payment[:amount_ordered].to_f == payment[:amount_paid].to_f)) ? 'completed' : 'pending',
+#            :amount => (payment[:amount_paid].present?) ? payment[:amount_ordered].to_f : 0,
+#            :payment_method => payment[:method]
+#          })
+#        end
 
         wombatOrder = {
           :id => order[:increment_id],
@@ -55,7 +68,8 @@ module MagentoIntegration
           :status => order[:status],
           :email => order[:customer_email],
           :currency => order[:order_currency_code],
-          :placed_on => order[:created_at],
+          :placed_on => placed_date.to_time.utc.iso8601,
+          :updated_at => upated_date.to_time.utc.iso8601,
           :totals => orderTotal,
           :line_items => lineItems,
           :adjustments => adjustments,
@@ -90,7 +104,7 @@ module MagentoIntegration
             if shipped_item[:product_id] == item[:product_id]
               item_to_send = {
                   :order_item_id => item[:item_id],
-                  :qty => shipped_item[:quantity]
+                  :qty => shipped_item[:quantity].to_f
               }
               items_to_send.push(item_to_send)
               break
@@ -103,7 +117,7 @@ module MagentoIntegration
           if shipped_item[:product_id] == item[:product_id]
             item_to_send = {
                 :order_item_id => item[:item_id],
-                :qty => shipped_item[:quantity]
+                :qty => shipped_item[:quantity].to_f
             }
             items_to_send.push(item_to_send)
             break
@@ -148,8 +162,8 @@ module MagentoIntegration
       lineItem = {
           :product_id => item[:product_id],
           :name => item[:name],
-          :quantity => item[:qty_ordered],
-          :price => item[:price],
+          :quantity => item[:qty_ordered].to_f,
+          :price => item[:price].to_f,
           :product_type => item[:product_type]
       }
 
