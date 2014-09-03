@@ -4,12 +4,12 @@ module MagentoIntegration
   class Product < Base
     
     def add_product(payload, update)
-      attribute_set_id = get_attribute_sets[0][:set_id]
-      website_id = get_stores[0][:website_id]
+      attribute_sets = get_attribute_sets
+      websites = get_stores
 
       wombat_product = {
         :categories => payload[:product][:taxons],
-        :websites => [website_id],
+        :websites => [websites[0][:website_id]],
         :name => payload[:product][:name],
         :description => payload[:product][:description],
         :status => 2,
@@ -67,7 +67,7 @@ module MagentoIntegration
           if !update
             result = @soapClient.call :catalog_product_create, {
               :type => 'simple',
-              :set => attribute_set_id,
+              :set => attribute_sets[0][:set_id],
               :sku => variant[:sku],
               :product_data => variant_product
             }
@@ -99,7 +99,7 @@ module MagentoIntegration
         if !update
           result = @soapClient.call :catalog_product_create, {
               :type => 'simple',
-              :set => attribute_set_id,
+              :set => attribute_sets[0][:set_id],
               :sku => payload[:product][:sku],
               :product_data => wombat_product
           }
