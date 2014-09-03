@@ -39,7 +39,7 @@ module MagentoIntegration
       if payload[:product][:variants]
         payload[:product][:variants].each do |variant|
           variant_product = wombat_product.clone
-          variant_product[:price] = variant[:price]
+          variant_product[:price] = variant[:price].to_f
           if payload[:product][:options]
             attributes = Array.new
             payload[:product][:options].each do |key,value|
@@ -54,7 +54,7 @@ module MagentoIntegration
           end
 
           variant_product[:stock_data] = {
-            :qty => variant[:quantity],
+            :qty => variant[:quantity].to_f,
             :is_in_stock => (variant[:quantity].to_f > 0) ? 1 : 0,
             :use_config_manage_stock => 1,
             :use_config_min_qty => 1,
