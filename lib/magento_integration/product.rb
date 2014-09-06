@@ -25,7 +25,7 @@ module MagentoIntegration
 
       if payload[:product][:properties]
         attributes = Array.new
-        payload[:product][:properties].each do |key,value|
+        payload[:product][:properties].each do |key, value|
           attributes.push({
             :key => key,
             :value => value
@@ -54,7 +54,7 @@ module MagentoIntegration
           end
 
           variant_product[:stock_data] = {
-            :qty => variant[:quantity].to_f,
+            :qty => variant[:quantity].to_s,
             :is_in_stock => (variant[:quantity].to_f > 0) ? 1 : 0,
             :use_config_manage_stock => 1,
             :use_config_min_qty => 1,
@@ -63,6 +63,8 @@ module MagentoIntegration
             :use_config_backorders => 1,
             :use_config_notify_stock_qty => 1
           }
+
+          puts variant_product
 
           if !update
             result = @soapClient.call :catalog_product_create, {
@@ -91,7 +93,7 @@ module MagentoIntegration
           :use_config_notify_stock_qty => 1
         }
         if payload[:product][:quantity]
-          wombat_product[:stock_data][:qty] = payload[:product][:quantity]
+          wombat_product[:stock_data][:qty] = payload[:product][:quantity].to_s
           wombat_product[:stock_data][:is_in_stock] = (payload[:product][:quantity].to_f > 0) ? 1 : 0
         end
 

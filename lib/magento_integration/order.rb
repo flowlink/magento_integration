@@ -3,11 +3,12 @@ require 'json'
 module MagentoIntegration
   class Order < Base
     
-    def get_orders
+    def get_orders(since_time)
       #shipment_carriers = @soapClient.call :sales_order_shipment_get_carriers, { :order_increment_id => '100000001' }
       #puts shipment_carriers
-      response = @soapClient.call :sales_order_list
-      
+
+      response = @soapClient.call :sales_order_list, { filters: { complex_filter: [{key: 'updated_at', value: { key: 'from', value: since_time } }] } }
+
       wombatOrders = Array.new
       
       orders = response.body
@@ -48,9 +49,6 @@ module MagentoIntegration
           :discount => orderTotal[:discount]
         })
 
-        placed_date = Date.parse(order[:created_at])
-        upated_date = Date.parse(order[:updated_at])
-
 #        payments = Array.new
 #        order[:payment].each do |payment|
 #          puts payment
@@ -62,14 +60,17 @@ module MagentoIntegration
 #          })
 #        end
 
+        placed_date = Time.parse(order[:created_at])
+        upated_date = Time.parse(order[:updated_at])
+
         wombatOrder = {
           :id => order[:increment_id],
           :magento_order_id => order[:order_id],
           :status => order[:status],
           :email => order[:customer_email],
           :currency => order[:order_currency_code],
-          :placed_on => placed_date.to_time.utc.iso8601,
-          :updated_at => upated_date.to_time.utc.iso8601,
+          :placed_on => placed_date.utc.iso8601,
+          :updated_at => upated_date.utc.iso8601,
           :totals => orderTotal,
           :line_items => lineItems,
           :adjustments => adjustments,

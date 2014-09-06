@@ -23,7 +23,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
   post '/get_orders' do
     begin
       order = MagentoIntegration::Order.new(get_client(@config))
-      orders = order.get_orders
+      orders = order.get_orders(@config[:since])
 
       orders.each { |o| add_object 'order', o }
 
