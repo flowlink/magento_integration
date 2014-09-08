@@ -7,34 +7,64 @@ module MagentoIntegration
       #shipment_carriers = @soapClient.call :sales_order_shipment_get_carriers, { :order_increment_id => '100000001' }
       #puts shipment_carriers
 
-      response = @soapClient.call :sales_order_list, { filters: { complex_filter: [{key: 'updated_at', value: { key: 'from', value: since_time } }] } }
+      complex_filter = Hash.new
+      complex_filter['key'] = "updated_at"
+      complex_filter['value'] = {
+          :key => "from",
+          :value => since_time
+      }
 
-      wombatOrders = Array.new
-      
+      response = @soapClient.call :sales_order_list, {
+        :filters => {
+          'complex_filter' => [[complex_filter]]
+        }
+      }
+
+      wombat_orders = Array.new
+
       orders = response.body
-      orders[:sales_order_list_response][:result][:item].each do |order|
+
+      magento_orders = convert_to_array(orders[:sales_order_list_response][:result][:item])
+
+      magento_orders.each do |order|
 
         orderResponse = @soapClient.call :sales_order_info, { :order_increment_id => order[:increment_id] }
 
         order = orderResponse.body[:sales_order_info_response][:result]
 
+        payments = Array.new
+
+        total_payments = 0
+
+        order_payments = convert_to_array(order[:payment])
+
+        order_payments.each do |payment|
+          if payment.has_key?('amount_paid')
+            total_payments += payment.has_key?('amount_paid').to_f
+          end
+          payments.push({
+            :number => payment[:payment_id],
+            :status => (payment.has_key?('amount_paid') && (payment[:amount_ordered].to_f == payment[:amount_paid].to_f)) ? 'completed' : 'pending',
+            :amount => (payment.has_key?('amount_paid')) ? payment[:amount_ordered].to_f : 0,
+            :payment_method => payment[:method]
+          })
+        end
+
         orderTotal = {
           :item => order[:subtotal].to_f,
           :tax => order[:tax_amount].to_f + order[:shipping_tax_amount].to_f,
           :shipping => order[:shipping_amount].to_f,
-          #todo payment
+          :payment => total_payments,
           :discount => order[:discount_amount].to_f,
           :order => order[:grand_total].to_f
         }
         orderTotal[:adjustments] = orderTotal[:tax] + orderTotal[:shipping] + orderTotal[:discount]
 
         lineItems = Array.new
-        if order[:items][:item].kind_of?(Array)
-          order[:items][:item].each do |item|
-            lineItems.push(item_m_to_w(item))
-          end
-        else
-          item = order[:items][:item]
+
+        order_items = convert_to_array(order[:items][:item])
+
+        order_items.each do |item|
           lineItems.push(item_m_to_w(item))
         end
 
@@ -49,21 +79,10 @@ module MagentoIntegration
           :discount => orderTotal[:discount]
         })
 
-#        payments = Array.new
-#        order[:payment].each do |payment|
-#          puts payment
-#          payments.push({
-#            :number => payment[:payment_id],
-#            :status => (payment[:amount_paid].present? && (payment[:amount_ordered].to_f == payment[:amount_paid].to_f)) ? 'completed' : 'pending',
-#            :amount => (payment[:amount_paid].present?) ? payment[:amount_ordered].to_f : 0,
-#            :payment_method => payment[:method]
-#          })
-#        end
-
         placed_date = Time.parse(order[:created_at])
         upated_date = Time.parse(order[:updated_at])
 
-        wombatOrder = {
+        wombat_order = {
           :id => order[:increment_id],
           :magento_order_id => order[:order_id],
           :status => order[:status],
@@ -72,6 +91,7 @@ module MagentoIntegration
           :placed_on => placed_date.utc.iso8601,
           :updated_at => upated_date.utc.iso8601,
           :totals => orderTotal,
+          :payments => payments,
           :line_items => lineItems,
           :adjustments => adjustments,
           :billing_address => address_m_to_w(order[:billing_address]),
@@ -80,10 +100,10 @@ module MagentoIntegration
 
         #payments
 
-        wombatOrders.push(wombatOrder)
+        wombat_orders.push(wombat_order)
       end
 
-      wombatOrders
+      wombat_orders
     end
 
     def cancel_order(payload)
@@ -99,23 +119,15 @@ module MagentoIntegration
       order = order_response.body[:sales_order_info_response][:result]
 
       items_to_send = Array.new
-      if order[:items][:item].kind_of?(Array)
-        order[:items][:item].each do |item|
-          payload[:shipment][:items].each do |shipped_item|
-            if shipped_item[:product_id] == item[:product_id]
-              item_to_send = {
-                  :order_item_id => item[:item_id],
-                  :qty => shipped_item[:quantity].to_f
-              }
-              items_to_send.push(item_to_send)
-              break
-            end
-          end
-        end
-      else
-        item = order[:items][:item]
-        payload[:shipment][:items].each do |shipped_item|
-          if shipped_item[:product_id] == item[:product_id]
+
+      order_items = convert_to_array(order[:items][:item])
+
+      order_items.each do |item|
+
+        shipment_items = convert_to_array(payload[:shipment][:items])
+
+        shipment_items.each do |shipped_item|
+          if shipped_item[:product_id] == item[:sku]
             item_to_send = {
                 :order_item_id => item[:item_id],
                 :qty => shipped_item[:quantity].to_f

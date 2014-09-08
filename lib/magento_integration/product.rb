@@ -9,30 +9,31 @@ module MagentoIntegration
 
       wombat_product = {
         :categories => payload[:product][:taxons],
-        :websites => [website[:website_id]],
+        'website_ids' => [[website[:website_id]]],
         :name => payload[:product][:name],
         :description => payload[:product][:description],
         :status => 2,
         :weight => 0,
         :visibility => 4,
-        :tax_class_id => 2,
-        :url_key => payload[:product][:permalink],
+        'tax_class_id' => 2,
+        'url_key' => payload[:product][:permalink],
         :price => payload[:product][:price],
-        :meta_title => payload[:product][:meta_title],
-        :meta_keyword => payload[:product][:meta_keywords],
-        :meta_description => payload[:product][:meta_description],
+        'meta_title' => payload[:product][:meta_title],
+        'meta_keyword' => payload[:product][:meta_keywords],
+        'meta_description' => payload[:product][:meta_description],
       }
 
       if payload[:product][:properties]
         attributes = Array.new
+
         payload[:product][:properties].each do |key, value|
           attributes.push({
             :key => key,
             :value => value
           })
         end
-        wombat_product[:additional_attributes] = {
-            :single_data => attributes
+        wombat_product['additional_attributes'] = {
+          'single_data' => [attributes]
         }
       end
 
@@ -40,31 +41,31 @@ module MagentoIntegration
         payload[:product][:variants].each do |variant|
           variant_product = wombat_product.clone
           variant_product[:price] = variant[:price].to_f
-          if payload[:product][:options]
+          if variant[:options]
             attributes = Array.new
-            payload[:product][:options].each do |key,value|
+
+            variant[:options].each do |key,value|
               attributes.push({
                 :key => key,
                 :value => value
               })
             end
-            variant_product[:additional_attributes] = {
-              :single_data => attributes
+
+            variant_product['additional_attributes'] = {
+              'single_data' => [attributes]
             }
           end
 
-          variant_product[:stock_data] = {
-            :qty => variant[:quantity].to_s,
-            :is_in_stock => (variant[:quantity].to_f > 0) ? 1 : 0,
-            :use_config_manage_stock => 1,
-            :use_config_min_qty => 1,
-            :use_config_min_sale_qty => 1,
-            :use_config_max_sale_qty => 1,
-            :use_config_backorders => 1,
-            :use_config_notify_stock_qty => 1
+          variant_product['stock_data'] = {
+            :qty => variant[:quantity],
+            'is_in_stock' => (variant[:quantity].to_f > 0) ? 1 : 0,
+            'use_config_manage_stock' => 1,
+            'use_config_min_qty' => 1,
+            'use_config_min_sale_qty' => 1,
+            'use_config_max_sale_qty' => 1,
+            'use_config_backorders' => 1,
+            'use_config_notify_stock_qty' => 1
           }
-
-          puts variant_product
 
           if !update
             result = @soapClient.call :catalog_product_create, {
@@ -73,28 +74,28 @@ module MagentoIntegration
               :sku => variant[:sku],
               :product_data => variant_product
             }
+            return result.body[:catalog_product_create_response][:result]
           else
             result = @soapClient.call :catalog_product_update, {
                 :type => 'simple',
                 :product => variant[:sku],
                 :product_data => variant_product
             }
+            return result.body[:catalog_product_update_response][:result]
           end
-
-          #(result.body[:catalog_product_create_response][:result])
         end
       else
-        wombat_product[:stock_data] = {
-          :use_config_manage_stock => 1,
-          :use_config_min_qty => 1,
-          :use_config_min_sale_qty => 1,
-          :use_config_max_sale_qty => 1,
-          :use_config_backorders => 1,
-          :use_config_notify_stock_qty => 1
+        wombat_product['stock_data'] = {
+          'use_config_manage_stock' => 1,
+          'use_config_min_qty' => 1,
+          'use_config_min_sale_qty' => 1,
+          'use_config_max_sale_qty' => 1,
+          'use_config_backorders' => 1,
+          'use_config_notify_stock_qty' => 1
         }
         if payload[:product][:quantity]
-          wombat_product[:stock_data][:qty] = payload[:product][:quantity].to_s
-          wombat_product[:stock_data][:is_in_stock] = (payload[:product][:quantity].to_f > 0) ? 1 : 0
+          wombat_product['stock_data'][:qty] = payload[:product][:quantity].to_s
+          wombat_product['stock_data']['is_in_stock'] = (payload[:product][:quantity].to_f > 0) ? 1 : 0
         end
 
 
@@ -102,18 +103,19 @@ module MagentoIntegration
           result = @soapClient.call :catalog_product_create, {
               :type => 'simple',
               :set => attribute_set[:set_id],
-              :sku => payload[:product][:sku],
+              :sku => payload[:product][:product_id], #product_id will be sku
               :product_data => wombat_product
           }
+          return result.body[:catalog_product_create_response][:result]
         else
           result = @soapClient.call :catalog_product_update, {
               :type => 'simple',
-              :product => payload[:product][:sku],
+              :product => payload[:product][:product_id], #product_id will be sku
               :product_data => wombat_product
           }
+          return result.body[:catalog_product_update_response][:result]
         end
 
-        #(result.body[:catalog_product_create_response][:result])
       end
 
       return true
@@ -121,17 +123,18 @@ module MagentoIntegration
 
 	def set_inventory(payload)
 	  product = {
-	    :stock_data => {
+	    'stock_data' => {
 		    :qty => payload[:inventory][:quantity]
-		}
+		  }
 	  }
 	  
 	  result = @soapClient.call :catalog_product_update, {
-                  :type => 'simple',
-                  :product => payload[:inventory][:product_id],
-                  :product_data => product
-			    }
-	  return result
+      :type => 'simple',
+      :product => payload[:inventory][:product_id],
+      :product_data => product
+    }
+
+	  return result.body[:catalog_product_update_response][:result]
 	end
 	
     private
