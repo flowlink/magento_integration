@@ -6,7 +6,6 @@ gem 'tilt-jbuilder', require: 'sinatra/jbuilder'
 gem 'savon', '~> 2.0'
 
 gem 'endpoint_base', github: 'spree/endpoint_base'
-gem 'capistrano'
 
 gem 'honeybadger'
 
