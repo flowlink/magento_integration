@@ -33,6 +33,8 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
          "No orders to import found"
       end
 
+      add_parameter 'since', Time.now.utc.iso8601
+
       result 200, line
     rescue => e
       result 500, "Unable to get orders from Magento. Error: #{e.message}"

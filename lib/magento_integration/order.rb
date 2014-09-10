@@ -70,12 +70,15 @@ module MagentoIntegration
 
         adjustments = Array.new
         adjustments.push({
+          :name => 'Tax',
           :tax => orderTotal[:tax]
         })
         adjustments.push({
+          :name => 'Shipping',
           :shipping => orderTotal[:shipping]
         })
         adjustments.push({
+          :name => 'Discount',
           :discount => orderTotal[:discount]
         })
 
@@ -173,7 +176,7 @@ module MagentoIntegration
 
     def item_m_to_w(item)
       lineItem = {
-          :product_id => item[:product_id],
+          :product_id => item[:sku],
           :name => item[:name],
           :quantity => item[:qty_ordered].to_f,
           :price => item[:price].to_f,
