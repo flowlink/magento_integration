@@ -13,7 +13,7 @@ module MagentoIntegration
 
       if object.kind_of?(Array)
         result = object
-      elseif !object.nil?
+      elsif !object.nil?
         result.push(object)
       end
 
