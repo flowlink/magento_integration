@@ -101,7 +101,10 @@ module MagentoIntegration
           :shipping_address => address_m_to_w(order[:shipping_address])
         }
 
-        #payments
+        if @soapClient.config[:connection_name]
+          wombat_order[:channel] = @soapClient.config[:connection_name]
+          wombat_order[:id] = sprintf("%s_%s", @soapClient.config[:connection_name], wombat_order[:id])
+        end
 
         wombat_orders.push(wombat_order)
       end
@@ -110,12 +113,15 @@ module MagentoIntegration
     end
 
     def cancel_order(payload)
+      payload[:order][:id] = remove_connection_name(payload[:order][:id])
+
       order_response = @soapClient.call :sales_order_cancel, { :order_increment_id => payload[:order][:id] }
 
       order_response.body[:sales_order_cancel_response][:result]
     end
 
     def add_shipment(payload)
+      payload[:shipment][:order_id] = remove_connection_name(payload[:shipment][:order_id])
 
       order_response = @soapClient.call :sales_order_info, { :order_increment_id => payload[:shipment][:order_id] }
 
@@ -169,6 +175,10 @@ module MagentoIntegration
           }
       end
 
+      if @soapClient.config[:connection_name]
+        shipment_increment_id = sprintf("%s_%s", @soapClient.config[:connection_name], shipment_increment_id)
+      end
+
       shipment_increment_id
     end
 
@@ -199,6 +209,14 @@ module MagentoIntegration
       }
 
       addressObject
+    end
+
+    def remove_connection_name(string)
+      if (@soapClient.config[:connection_name]) && (string.include? "#{@soapClient.config[:connection_name]}_")
+        return string["#{@soapClient.config[:connection_name]}_".length, string.length]
+      end
+
+      string
     end
   end
 end
