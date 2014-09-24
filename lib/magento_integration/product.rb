@@ -103,14 +103,14 @@ module MagentoIntegration
           result = @soapClient.call :catalog_product_create, {
               :type => 'simple',
               :set => attribute_set[:set_id],
-              :sku => payload[:product][:product_id], #product_id will be sku
+              :sku => payload[:product][:id], #product_id will be sku
               :product_data => wombat_product
           }
           return result.body[:catalog_product_create_response][:result]
         else
           result = @soapClient.call :catalog_product_update, {
               :type => 'simple',
-              :product => payload[:product][:product_id], #product_id will be sku
+              :product => payload[:product][:id], #product_id will be sku
               :product_data => wombat_product
           }
           return result.body[:catalog_product_update_response][:result]
