@@ -52,7 +52,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
         result 500, "Error while trying to cancel the order"
       end
     rescue => e
-      result 500, "Unable to get orders from Magento. Error: #{e.message}"
+      result 500, "Unable to cancel order. Error: #{e.message}"
     end
   end
 
