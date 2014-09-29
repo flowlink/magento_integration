@@ -4,9 +4,6 @@ module MagentoIntegration
   class Order < Base
     
     def get_orders(since_time)
-      #shipment_carriers = @soapClient.call :sales_order_shipment_get_carriers, { :order_increment_id => '100000001' }
-      #puts shipment_carriers
-
       complex_filter = Hash.new
       complex_filter['key'] = "updated_at"
       complex_filter['value'] = {
@@ -98,11 +95,13 @@ module MagentoIntegration
           :line_items => lineItems,
           :adjustments => adjustments,
           :billing_address => address_m_to_w(order[:billing_address]),
-          :shipping_address => address_m_to_w(order[:shipping_address])
+          :shipping_address => address_m_to_w(order[:shipping_address]),
+          :shipping_method => order[:shipping_method]
         }
 
         if @soapClient.config[:connection_name]
           wombat_order[:channel] = @soapClient.config[:connection_name]
+          wombat_order[:source] = @soapClient.config[:connection_name]
           wombat_order[:id] = sprintf("%s_%s", @soapClient.config[:connection_name], wombat_order[:id])
         end
 
@@ -110,6 +109,28 @@ module MagentoIntegration
       end
 
       wombat_orders
+    end
+    
+    def get_shipment_objects(orders)
+      wombat_shipments = Array.new
+      
+      orders.each do | order |
+        shipment = {
+          :id => order[:id],
+          :order_id => order[:id],
+          :status => "ready",
+          :email => order[:email],
+          :shipping_method => order[:shipping_method],
+          :totals => order[:totals],
+          :items => order[:line_items],
+          :shipping_address => order[:shipping_address],
+          :billing_address => order[:billing_address]
+        }
+        
+        wombat_shipments.push(shipment)
+      end
+      
+      return wombat_shipments
     end
 
     def cancel_order(payload)

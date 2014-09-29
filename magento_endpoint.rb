@@ -26,6 +26,11 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
       orders = order.get_orders(@config[:since])
 
       orders.each { |o| add_object 'order', o }
+      
+      if @config[:create_shipment]
+        shipments = order.get_shipment_objects(orders)
+        shipments.each { |s| add_object 'shipment', s }
+      end
 
       line = if (count = orders.count) > 0
          "Updating #{count} #{"order".pluralize count} from Magento"
@@ -73,15 +78,15 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
   post '/add_product' do
     begin
       product = MagentoIntegration::Product.new(get_client(@config))
-      status = product.add_product(@payload, false)
+      no_products = product.add_product(@payload, false)
 
       if status
-        result 200, "Product successfully sent to Magento store"
+        result 200, "Successfully sent #{no_products} products to Magento store"
       else
-        result 500, "Error while trying to send product to Magento"
+        result 500, "Error while trying to send product(s) to Magento"
       end
     rescue => e
-      result 500, "Unable to send product to Magento. Error: #{e.message}"
+      result 500, "Unable to send product(s) to Magento. Error: #{e.message}"
     end
   end
 

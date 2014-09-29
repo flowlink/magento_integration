@@ -1,4 +1,7 @@
 require 'json'
+require 'active_support'
+require 'open-uri'
+require 'base64'
 
 module MagentoIntegration
   class Product < Base
@@ -36,6 +39,8 @@ module MagentoIntegration
           'single_data' => [attributes]
         }
       end
+      
+      total = 0
 
       if payload[:product][:variants]
         payload[:product][:variants].each do |variant|
@@ -74,14 +79,20 @@ module MagentoIntegration
               :sku => variant[:sku],
               :product_data => variant_product
             }
-            return result.body[:catalog_product_create_response][:result]
+            if result.body[:catalog_product_create_response][:result]
+              total += 1
+            end
+          
+            add_images(variant[:sku], variant[:images].count > 0 ? variant[:images] : payload[:product][:images])
           else
             result = @soapClient.call :catalog_product_update, {
                 :type => 'simple',
                 :product => variant[:sku],
                 :product_data => variant_product
             }
-            return result.body[:catalog_product_update_response][:result]
+            if result.body[:catalog_product_update_response][:result]
+              total += 1
+            end
           end
         end
       else
@@ -106,19 +117,23 @@ module MagentoIntegration
               :sku => payload[:product][:id], #product_id will be sku
               :product_data => wombat_product
           }
-          return result.body[:catalog_product_create_response][:result]
+          if result.body[:catalog_product_create_response][:result]
+            total += 1
+          end
         else
           result = @soapClient.call :catalog_product_update, {
               :type => 'simple',
               :product => payload[:product][:id], #product_id will be sku
               :product_data => wombat_product
           }
-          return result.body[:catalog_product_update_response][:result]
+          if result.body[:catalog_product_update_response][:result]
+            total += 1
+          end
         end
 
       end
 
-      return true
+      return total
     end
 
 	def set_inventory(payload)
@@ -160,6 +175,41 @@ module MagentoIntegration
         return stores[0]
       else
         return stores
+      end
+    end
+    
+    def add_images(product_sku, images)
+      if images.count == 0
+        return
+      end
+    
+      data = Array.new
+      files = Array.new
+      
+      i = 0
+      images.each do |image|
+        data_str = open(image[:url])
+        image_base64 = Base64.encode64(data_str.read)
+        
+        image_data = {
+          :file => {
+            :content => image_base64,
+            :mime => data_str.content_type,
+            :name => Digest::MD5.hexdigest(image[:url])
+          },
+          :label => '',
+          :position => i,
+          :types => (i == 0) ? ['image','small_image','thumbnail'] : [],
+          :exclude => 0
+        }
+        
+        result = @soapClient.call :catalog_product_attribute_media_create, {
+          :product => product_sku,
+          :data => [image_data]
+        }
+        
+        puts result.body
+        i += 1
       end
     end
   end
