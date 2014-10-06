@@ -124,10 +124,12 @@ module MagentoIntegration
           rescue => e
             if e.message.include? "101"
               add_new = true
+            else
+              raise e.message
             end
           end
         end
-        
+
         if add_new
           result = @soapClient.call :catalog_product_create, {
               :type => 'simple',
