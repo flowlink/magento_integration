@@ -31,31 +31,44 @@ module MagentoIntegration
 
         payments = Array.new
 
-        total_payments = 0
+        invoices_complex_filter = Hash.new
+        invoices_complex_filter['key'] = "order_id"
+        invoices_complex_filter['value'] = {
+            :key => "eq",
+            :value => order[:order_id]
+        }
+
+        invoices_response = @soapClient.call :sales_order_invoice_list, {
+            :filters => {
+                'complex_filter' => [[invoices_complex_filter]]
+            }
+        }
+
+        invoices = convert_to_array(invoices_response.body[:sales_order_invoice_list_response][:result][:item])
 
         order_payments = convert_to_array(order[:payment])
+        payment_method = (order_payments && order_payments.count) ? order_payments[0][:method] : 'no method'
 
-        order_payments.each do |payment|
-          if payment.has_key?('amount_paid')
-            total_payments += payment.has_key?('amount_paid').to_f
-          end
+        i = 1
+        invoices.each do |invoice|
           payments.push({
-            :number => payment[:payment_id],
-            :status => (payment.has_key?('amount_paid') && (payment[:amount_ordered].to_f == payment[:amount_paid].to_f)) ? 'completed' : 'pending',
-            :amount => (payment.has_key?('amount_paid')) ? payment[:amount_ordered].to_f : 0,
-            :payment_method => payment[:method]
+              :number => i,
+              :status => (order[:status] == 'processing') ? 'complete' : order[:status],
+              :amount => invoice[:grand_total].to_f,
+              :payment_method => payment_method
           })
+          i += 1
         end
 
         orderTotal = {
           :item => order[:subtotal].to_f,
+          :adjustment => order[:subtotal].to_f + order[:tax_amount].to_f + order[:shipping_tax_amount].to_f + order[:discount_amount].to_f,
           :tax => order[:tax_amount].to_f + order[:shipping_tax_amount].to_f,
           :shipping => order[:shipping_amount].to_f,
-          :payment => total_payments,
           :discount => order[:discount_amount].to_f,
+          :payment => order[:total_paid].to_f,
           :order => order[:grand_total].to_f
         }
-        orderTotal[:adjustments] = orderTotal[:tax] + orderTotal[:shipping] + orderTotal[:discount]
 
         lineItems = Array.new
 
@@ -102,7 +115,7 @@ module MagentoIntegration
         if @soapClient.config[:connection_name]
           wombat_order[:channel] = @soapClient.config[:connection_name]
           wombat_order[:source] = @soapClient.config[:connection_name]
-          wombat_order[:id] = sprintf("%s_%s", @soapClient.config[:connection_name], wombat_order[:id])
+          wombat_order[:id] = sprintf("%s-%s", @soapClient.config[:connection_name], wombat_order[:id])
         end
 
         wombat_orders.push(wombat_order)
@@ -197,7 +210,7 @@ module MagentoIntegration
       end
 
       if @soapClient.config[:connection_name]
-        shipment_increment_id = sprintf("%s_%s", @soapClient.config[:connection_name], shipment_increment_id)
+        shipment_increment_id = sprintf("%s-%s", @soapClient.config[:connection_name], shipment_increment_id)
       end
 
       shipment_increment_id
@@ -233,8 +246,8 @@ module MagentoIntegration
     end
 
     def remove_connection_name(string)
-      if (@soapClient.config[:connection_name]) && (string.include? "#{@soapClient.config[:connection_name]}_")
-        return string["#{@soapClient.config[:connection_name]}_".length, string.length]
+      if (@soapClient.config[:connection_name]) && (string.include? "#{@soapClient.config[:connection_name]}-")
+        return string["#{@soapClient.config[:connection_name]}-".length, string.length]
       end
 
       string
