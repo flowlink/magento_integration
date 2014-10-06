@@ -109,8 +109,26 @@ module MagentoIntegration
           wombat_product['stock_data']['is_in_stock'] = (payload[:product][:quantity].to_f > 0) ? 1 : 0
         end
 
+        add_new = !update
 
-        if !update
+        if update
+          begin
+            result = @soapClient.call :catalog_product_update, {
+                :type => 'simple',
+                :product => payload[:product][:id], #product_id will be sku
+                :product_data => wombat_product
+            }
+            if result.body[:catalog_product_update_response][:result]
+              total += 1
+            end
+          rescue => e
+            if e.message.include? "101"
+              add_new = true
+            end
+          end
+        end
+        
+        if add_new
           result = @soapClient.call :catalog_product_create, {
               :type => 'simple',
               :set => attribute_set[:set_id],
@@ -118,15 +136,6 @@ module MagentoIntegration
               :product_data => wombat_product
           }
           if result.body[:catalog_product_create_response][:result]
-            total += 1
-          end
-        else
-          result = @soapClient.call :catalog_product_update, {
-              :type => 'simple',
-              :product => payload[:product][:id], #product_id will be sku
-              :product_data => wombat_product
-          }
-          if result.body[:catalog_product_update_response][:result]
             total += 1
           end
         end
