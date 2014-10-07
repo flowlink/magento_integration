@@ -53,7 +53,7 @@ module MagentoIntegration
         invoices.each do |invoice|
           payments.push({
               :number => i,
-              :status => (order[:status] == 'processing') ? 'complete' : order[:status],
+              :status => get_order_status(order[:status]),
               :amount => invoice[:grand_total].to_f,
               :payment_method => payment_method
           })
@@ -98,7 +98,7 @@ module MagentoIntegration
         wombat_order = {
           :id => order[:increment_id],
           :magento_order_id => order[:order_id],
-          :status => order[:status],
+          :status => get_order_status(order[:status]),
           :email => order[:customer_email],
           :currency => order[:order_currency_code],
           :placed_on => placed_date.utc.iso8601,
@@ -251,6 +251,22 @@ module MagentoIntegration
       end
 
       string
+    end
+
+    def get_order_status(status)
+      case status
+        when "processing"
+          return "completed"
+        when "complete"
+          return "completed"
+        when "pending_payment"
+          return "pending"
+        when "payment_review"
+          return "payment"
+        when "pending_paypal"
+          return "pending"
+      end
+      return status
     end
   end
 end

@@ -27,7 +27,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
       orders.each { |o| add_object 'order', o }
       
-      if @config[:create_shipment]
+      if @config[:create_shipment].to_i == 1
         shipments = order.get_shipment_objects(orders)
         shipments.each { |s| add_object 'shipment', s }
       end
