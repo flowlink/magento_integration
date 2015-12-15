@@ -1,4 +1,7 @@
-worker_processes ENV.fetch('WORKER_PROCESSES', 5).to_i
+@dir = File.expand_path(File.dirname(__FILE__))
+listen File.join(@dir, "../unicorn.sock"), :backlog => 1024
+
+worker_processes ENV.fetch('WORKER_PROCESSES', 3).to_i
 timeout 240
 
 preload_app true
