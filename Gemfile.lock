@@ -1,6 +1,6 @@
 GIT
-  remote: git://github.com/spree/endpoint_base.git
-  revision: dac37b490353cea6ca2b06a1b1b81acc0af6888c
+  remote: git://github.com/flowlink/endpoint_base.git
+  revision: b3c06ec88b6cfcd9bea165def5f0592a0707730e
   specs:
     endpoint_base (0.3)
       activesupport
@@ -10,112 +10,127 @@ GIT
 GEM
   remote: https://www.rubygems.org/
   specs:
-    activesupport (4.1.4)
-      i18n (~> 0.6, >= 0.6.9)
-      json (~> 1.7, >= 1.7.7)
+    activesupport (4.2.10)
+      i18n (~> 0.7)
       minitest (~> 5.1)
-      thread_safe (~> 0.1)
+      thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
-    addressable (2.3.6)
-    akami (1.2.2)
+    addressable (2.5.2)
+      public_suffix (>= 2.0.2, < 4.0)
+    airbrake (7.2.0)
+      airbrake-ruby (~> 2.5)
+    airbrake-ruby (2.8.1)
+    akami (1.3.1)
       gyoku (>= 0.4.0)
       nokogiri
-    builder (3.2.2)
-    crack (0.4.2)
+    builder (3.2.3)
+    byebug (10.0.0)
+    coderay (1.1.2)
+    concurrent-ruby (1.0.5)
+    crack (0.4.3)
       safe_yaml (~> 1.0.0)
-    diff-lcs (1.2.5)
-    dotenv (0.11.1)
-      dotenv-deployment (~> 0.0.2)
-    dotenv-deployment (0.0.2)
-    foreman (0.74.0)
-      dotenv (~> 0.11.1)
+    diff-lcs (1.3)
+    foreman (0.84.0)
       thor (~> 0.19.1)
-    gyoku (1.1.1)
+    gyoku (1.3.1)
       builder (>= 2.1.2)
-    honeybadger (1.16.3)
-      json
-    httpi (2.2.5)
+    hashdiff (0.3.7)
+    honeybadger (3.3.0)
+    httpi (2.4.2)
       rack
-    i18n (0.6.11)
-    jbuilder (2.1.3)
+      socksify
+    i18n (0.9.3)
+      concurrent-ruby (~> 1.0)
+    jbuilder (2.0.6)
       activesupport (>= 3.0.0, < 5)
       multi_json (~> 1.2)
-    json (1.8.1)
-    kgio (2.9.2)
-    macaddr (1.7.1)
-      systemu (~> 2.6.2)
-    mime-types (1.25.1)
-    mini_portile (0.6.0)
-    minitest (5.4.0)
-    multi_json (1.10.1)
-    nokogiri (1.6.3.1)
-      mini_portile (= 0.6.0)
-    nori (2.4.0)
-    rack (1.5.2)
+    json (2.1.0)
+    kgio (2.11.2)
+    method_source (0.9.0)
+    mini_portile2 (2.3.0)
+    minitest (5.11.3)
+    multi_json (1.13.1)
+    nokogiri (1.8.2)
+      mini_portile2 (~> 2.3.0)
+    nori (2.6.0)
+    pry (0.11.3)
+      coderay (~> 1.1.0)
+      method_source (~> 0.9.0)
+    pry-byebug (3.6.0)
+      byebug (~> 10.0)
+      pry (~> 0.10)
+    public_suffix (3.0.1)
+    rack (1.6.8)
     rack-protection (1.5.3)
       rack
-    rack-test (0.6.2)
-      rack (>= 1.0)
-    raindrops (0.13.0)
-    rake (10.3.2)
+    rack-test (0.8.2)
+      rack (>= 1.0, < 3)
+    raindrops (0.19.0)
+    rake (12.3.0)
     rspec (2.99.0)
       rspec-core (~> 2.99.0)
       rspec-expectations (~> 2.99.0)
       rspec-mocks (~> 2.99.0)
-    rspec-core (2.99.1)
+    rspec-core (2.99.2)
     rspec-expectations (2.99.2)
       diff-lcs (>= 1.1.3, < 2.0)
-    rspec-mocks (2.99.2)
-    safe_yaml (1.0.3)
-    savon (2.6.0)
-      akami (~> 1.2.0)
+    rspec-mocks (2.99.4)
+    safe_yaml (1.0.4)
+    savon (2.12.0)
+      akami (~> 1.2)
       builder (>= 2.1.2)
-      gyoku (~> 1.1.0)
-      httpi (~> 2.2.3)
-      nokogiri (>= 1.4.0)
-      nori (~> 2.4.0)
-      uuid (~> 2.3.7)
-      wasabi (~> 3.3.0)
-    sinatra (1.4.5)
-      rack (~> 1.4)
+      gyoku (~> 1.2)
+      httpi (~> 2.3)
+      nokogiri (>= 1.8.1)
+      nori (~> 2.4)
+      wasabi (~> 3.4)
+    shotgun (0.9.2)
+      rack (>= 1.0)
+    sinatra (1.4.8)
+      rack (~> 1.5)
       rack-protection (~> 1.4)
-      tilt (~> 1.3, >= 1.3.4)
-    systemu (2.6.4)
-    thor (0.19.1)
-    thread_safe (0.3.4)
+      tilt (>= 1.3, < 3)
+    socksify (1.7.1)
+    thor (0.19.4)
+    thread_safe (0.3.6)
     tilt (1.4.1)
-    tilt-jbuilder (0.6.0)
+    tilt-jbuilder (0.7.1)
       jbuilder
-      tilt (<= 1.5.0)
-    tzinfo (1.2.2)
+      tilt (>= 1.3.0, < 3)
+    tzinfo (1.2.5)
       thread_safe (~> 0.1)
-    unicorn (4.8.3)
+    unicorn (5.4.0)
       kgio (~> 2.6)
-      rack
       raindrops (~> 0.7)
-    uuid (2.3.7)
-      macaddr (~> 1.0)
-    wasabi (3.3.0)
+    wasabi (3.5.0)
       httpi (~> 2.0)
-      mime-types (< 2.0.0)
-      nokogiri (>= 1.4.0)
-    webmock (1.18.0)
+      nokogiri (>= 1.4.2)
+    webmock (3.3.0)
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
+      hashdiff
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  airbrake
   endpoint_base!
   foreman
   honeybadger
+  jbuilder (= 2.0.6)
+  pry
+  pry-byebug
   rack-test
-  rake (~> 10.3.2)
+  rake
   rspec (~> 2.14)
   savon (~> 2.0)
+  shotgun
   sinatra
   tilt (~> 1.4.1)
   tilt-jbuilder
   unicorn
   webmock
+
+BUNDLED WITH
+   1.16.0
