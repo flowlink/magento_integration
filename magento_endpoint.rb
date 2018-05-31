@@ -12,21 +12,21 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
   Honeybadger.configure do |config|
 
   end
-      
+
   error Savon::SOAPFault do
     result 500, env['sinatra.error'].to_s
   end
-  
+
   before do
   end
-  
+
   post '/get_orders' do
     begin
       order = MagentoIntegration::Order.new(get_client(@config))
       orders = order.get_orders(@config[:since])
 
       orders.each { |o| add_object 'order', o }
-      
+
       if @config[:create_shipment].to_i == 1
         shipments = order.get_shipment_objects(orders)
         shipments.each { |s| add_object 'shipment', s }
@@ -42,6 +42,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
       result 200, line
     rescue => e
+      puts e.backtrace
       result 500, "Unable to get orders from Magento. Error: #{e.message}"
     end
   end
@@ -57,6 +58,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
         result 500, "Error while trying to cancel the order"
       end
     rescue => e
+      puts e.backtrace
       result 500, "Unable to cancel order. Error: #{e.message}"
     end
   end
@@ -71,6 +73,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
       result 200, "The shipment #{@payload[:shipment][:id]} was sent to Magento"
     rescue => e
+      puts e.backtrace
       result 500, "Unable to send shipment details to Magento. Error: #{e.message}"
     end
   end
@@ -86,6 +89,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
         result 500, "Error while trying to send product(s) to Magento"
       end
     rescue => e
+      puts e.backtrace
       result 500, "Unable to send product(s) to Magento. Error: #{e.message}"
     end
   end
@@ -101,10 +105,11 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
         result 500, "Error while trying to update product"
       end
     rescue => e
+      puts e.backtrace
       result 500, "Unable to send product to Magento. Error: #{e.message}"
     end
   end
-  
+
   post '/set_inventory' do
     begin
       product = MagentoIntegration::Product.new(get_client(@config))
@@ -116,6 +121,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
         result 500, "Error while trying to set inventory"
 	  end
     rescue => e
+      puts e.backtrace
       result 500, "Unable to set inventory details inside Magento. Error: #{e.message}"
     end
   end
@@ -128,5 +134,5 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
     end
     return @client
   end
-  
+
 end

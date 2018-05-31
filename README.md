@@ -19,3 +19,20 @@ $ docker run -t -e VIRTUAL_HOST=magento_integration.flowlink.io -e RAILS_ENV=dev
 ```
 
 Then access the local integration at http://localhost:3001
+
+## Connection Parameters
+
+The following parameters must be setup within [FlowLink](http://flowlink.io/):
+
+| Name | Value |
+| :----| :-----|
+| store_url | URL of your store |
+| api_username | API Access Key (required) |
+| api_key | API Access Secret (required) |
+
+### Possible Config Options
+* __since__ => Used on the GET_ORDERS workflow
+* __store_url__ => Used on ALL workflows
+* __api_username__ => Used on ALL workflows
+* __api_key__ => Used on ALL workflows
+* __create_shipment__ => Used on the GET_ORDERS workflow. Should be 0 or 1
