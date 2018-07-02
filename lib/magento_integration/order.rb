@@ -22,9 +22,7 @@ module MagentoIntegration
       orders = response.body
 
       magento_orders = convert_to_array(orders[:sales_order_list_response][:result][:item])
-
       magento_orders.each do |order|
-
         orderResponse = @soapClient.call :sales_order_info, { :order_increment_id => order[:increment_id] }
 
         order = orderResponse.body[:sales_order_info_response][:result]
@@ -103,13 +101,42 @@ module MagentoIntegration
           :currency => order[:order_currency_code],
           :placed_on => placed_date.utc.iso8601,
           :updated_at => upated_date.utc.iso8601,
+          :discount => order[:discount_amount],
           :totals => orderTotal,
           :payments => payments,
           :line_items => lineItems,
           :adjustments => adjustments,
           :billing_address => address_m_to_w(order[:billing_address]),
-          :shipping_address => address_m_to_w(order[:shipping_address]),
-          :shipping_method => order[:shipping_method]
+          :shipping_method => order[:shipping_method],
+          :total_refunded => order[:total_refunded],
+          :total_due => order[:total_due],
+          :comments => concat_comments(order[:status_history][:item]),
+          :total_qty_ordered => order[:total_qty_ordered],
+          :store_to_base_rate => order[:store_to_base_rate],
+          :store_to_order_rate => order[:store_to_order_rate],
+          :weight => order[:weight],
+          :store_name => order[:store_name],
+          :order_state => order[:state],
+          :global_currency_code => order[:global_currency_code],
+          :store_currency_code => order[:store_currency_code],
+          :shipping_description => order[:shipping_description],
+          :customer_firstname => order[:customer_firstname],
+          :customer_lastname => order[:customer_lastname],
+          :is_virtual => order[:is_virtual],
+          :customer_note_notify => order[:customer_note_notify],
+          :customer_is_guest => order[:customer_is_guest],
+          :email_sent => order[:email_sent],
+          :store_id=> order[:store_id],
+          :total_canceled=> order[:total_canceled],
+          :base_tax_amount=> order[:base_tax_amount],
+          :base_shipping_amount=> order[:base_shipping_amount],
+          :base_discount_amount=> order[:base_discount_amount],
+          :base_subtotal=> order[:base_subtotal],
+          :base_grand_total=> order[:base_grand_total],
+          :base_total_canceled=> order[:base_total_canceled],
+          :base_to_global_rate=> order[:base_to_global_rate],
+          :base_to_order_rate=> order[:base_to_order_rate],
+          :base_currency_code=> order[:base_currency_code]
         }
 
         if @soapClient.config[:connection_name]
@@ -220,11 +247,36 @@ module MagentoIntegration
 
     def item_m_to_w(item)
       lineItem = {
-          :product_id => item[:sku],
-          :name => item[:name],
-          :quantity => item[:qty_ordered].to_f,
-          :price => item[:price].to_f,
-          :product_type => item[:product_type]
+        :product_id => item[:sku],
+        :name => item[:name],
+        :quantity => item[:qty_ordered].to_f,
+        :price => item[:price].to_f,
+        :product_type => item[:product_type],
+        :weight => item[:weight],
+        :qty_canceled => item[:qty_canceled],
+        :qty_invoiced => item[:qty_invoiced],
+        :qty_refunded => item[:qty_refunded],
+        :qty_shipped => item[:qty_shipped],
+        :base_price => item[:base_price],
+        :original_price => item[:original_price],
+        :base_original_price => item[:base_original_price],
+        :tax_percent => item[:tax_percent],
+        :tax_amount => item[:tax_amount],
+        :base_tax_amount => item[:base_tax_amount],
+        :tax_invoiced => item[:tax_invoiced],
+        :base_tax_invoiced => item[:base_tax_invoiced],
+        :discount_percent => item[:discount_percent],
+        :discount_amount => item[:discount_amount],
+        :base_discount_amount => item[:base_discount_amount],
+        :discount_invoiced => item[:discount_invoiced],
+        :base_discount_invoiced => item[:base_discount_invoiced],
+        :amount_refunded => item[:amount_refunded],
+        :base_amount_refunded => item[:base_amount_refunded],
+        :row_total => item[:row_total],
+        :base_row_total => item[:base_row_total],
+        :row_invoiced => item[:row_invoiced],
+        :base_row_invoiced => item[:base_row_invoiced],
+        :row_weight => item[:row_weight]
       }
 
       lineItem
@@ -234,12 +286,14 @@ module MagentoIntegration
       addressObject = {
           :firstname => address[:firstname],
           :lastname => address[:lastname],
+          :company => address[:company],
           :address1 => address[:street],
           :zipcode => address[:postcode],
           :city => address[:city],
           :state => address[:region],
           :country => address[:country_id],
           :phone => address[:telephone],
+          :address_type => address[:address_type]
       }
 
       addressObject
@@ -267,6 +321,17 @@ module MagentoIntegration
           return "pending"
       end
       return status
+    end
+
+    def concat_comments(items)
+      comments = ''
+      items.each do |i|
+        if i[:comment]
+          comments = "#{comments}, #{i[:comment]}"
+        end
+      end
+
+      comments
     end
   end
 end
