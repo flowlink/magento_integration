@@ -122,6 +122,7 @@ module MagentoIntegration
           :shipping_description => order[:shipping_description],
           :customer_firstname => order[:customer_firstname],
           :customer_lastname => order[:customer_lastname],
+          :customer_name => getFullName(order),
           :is_virtual => order[:is_virtual],
           :customer_note_notify => order[:customer_note_notify],
           :customer_is_guest => order[:customer_is_guest],
@@ -248,6 +249,7 @@ module MagentoIntegration
     def item_m_to_w(item)
       lineItem = {
         :product_id => item[:sku],
+        :sku => item[:sku],
         :name => item[:name],
         :quantity => item[:qty_ordered].to_f,
         :price => item[:price].to_f,
@@ -324,14 +326,20 @@ module MagentoIntegration
     end
 
     def concat_comments(items)
-      comments = ''
-      items.each do |i|
-        if i[:comment]
-          comments = "#{comments}, #{i[:comment]}"
+      comments = ""
+      unless items.nil?
+        items = [items] if !items.kind_of?(Array)
+        items.each do |i|
+          c = i.fetch(:comment, "")
+          comments += "#{c} --- " if c != ""
         end
+        comments.chomp!(' --- ')
       end
-
       comments
+    end
+
+    def getFullName(order)
+      "#{order[:customer_firstname]} #{order[:customer_lastname]}"
     end
   end
 end
