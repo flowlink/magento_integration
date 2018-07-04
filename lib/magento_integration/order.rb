@@ -96,6 +96,7 @@ module MagentoIntegration
         wombat_order = {
           :id => order[:increment_id],
           :magento_order_id => order[:order_id],
+          :magento_increment_id => order[:increment_id],
           :status => get_order_status(order[:status]),
           :email => order[:customer_email],
           :currency => order[:order_currency_code],

@@ -6,97 +6,64 @@ require 'base64'
 module MagentoIntegration
   class Product < Base
     
-    def add_product(payload, update)
-      attribute_set = get_attribute_set
-      website = get_store
+  def add_product(payload, update)
+    attribute_set = get_attribute_set
+    website = get_store
 
-      wombat_product = {
-        :categories => payload[:product][:taxons],
-        'website_ids' => [[website[:website_id]]],
-        :name => payload[:product][:name],
-        :description => payload[:product][:description],
-        :status => 2,
-        :weight => 0,
-        :visibility => 4,
-        'tax_class_id' => 2,
-        'url_key' => payload[:product][:permalink],
-        :price => payload[:product][:price],
-        'meta_title' => payload[:product][:meta_title],
-        'meta_keyword' => payload[:product][:meta_keywords],
-        'meta_description' => payload[:product][:meta_description],
-      }
+    wombat_product = {
+      :categories => payload[:product][:taxons],
+      'website_ids' => [[website[:website_id]]],
+      :name => payload[:product][:name],
+      :description => payload[:product][:description],
+      :status => 2,
+      :weight => 0,
+      :visibility => 4,
+      'tax_class_id' => 2,
+      'url_key' => payload[:product][:permalink],
+      :price => payload[:product][:price],
+      'meta_title' => payload[:product][:meta_title],
+      'meta_keyword' => payload[:product][:meta_keywords],
+      'meta_description' => payload[:product][:meta_description],
+    }
 
-      if payload[:product][:properties]
-        attributes = Array.new
+    if payload[:product][:properties]
+      attributes = Array.new
 
-        payload[:product][:properties].each do |key, value|
-          attributes.push({
-            :key => key,
-            :value => value
-          })
-        end
-        wombat_product['additional_attributes'] = {
-          'single_data' => [attributes]
-        }
+      payload[:product][:properties].each do |key, value|
+        attributes.push({
+          :key => key,
+          :value => value
+        })
       end
-      
-      total = 0
+      wombat_product['additional_attributes'] = {
+        'single_data' => [attributes]
+      }
+    end
+    
+    total = 0
 
-      if payload[:product][:variants]
-        payload[:product][:variants].each do |variant|
-          variant_product = wombat_product.clone
-          variant_product[:price] = variant[:price].to_f
-          if variant[:options]
-            attributes = Array.new
+    if payload[:product][:variants]
+      payload[:product][:variants].each do |variant|
+        variant_product = wombat_product.clone
+        variant_product[:price] = variant[:price].to_f
+        if variant[:options]
+          attributes = Array.new
 
-            variant[:options].each do |key,value|
-              attributes.push({
-                :key => key,
-                :value => value
-              })
-            end
-
-            variant_product['additional_attributes'] = {
-              'single_data' => [attributes]
-            }
+          variant[:options].each do |key,value|
+            attributes.push({
+              :key => key,
+              :value => value
+            })
           end
 
-          variant_product['stock_data'] = {
-            :qty => variant[:quantity],
-            'is_in_stock' => (variant[:quantity].to_f > 0) ? 1 : 0,
-            'use_config_manage_stock' => 1,
-            'use_config_min_qty' => 1,
-            'use_config_min_sale_qty' => 1,
-            'use_config_max_sale_qty' => 1,
-            'use_config_backorders' => 1,
-            'use_config_notify_stock_qty' => 1
+          variant_product['additional_attributes'] = {
+            'single_data' => [attributes]
           }
-
-          if !update
-            result = @soapClient.call :catalog_product_create, {
-              :type => 'simple',
-              :set => attribute_set[:set_id],
-              :sku => variant[:sku],
-              :product_data => variant_product
-            }
-            if result.body[:catalog_product_create_response][:result]
-              total += 1
-            end
-          
-            add_images(variant[:sku], variant[:images].count > 0 ? variant[:images] : payload[:product][:images])
-          else
-            result = @soapClient.call :catalog_product_update, {
-                :type => 'simple',
-                :product => variant[:sku],
-                :product_data => variant_product
-            }
-            if result.body[:catalog_product_update_response][:result]
-              total += 1
-            end
-          end
         end
-      else
-        wombat_product['stock_data'] = {
+
+        variant_product['stock_data'] = {
+          :qty => variant[:quantity],
+          'is_in_stock' => (variant[:quantity].to_f > 0) ? 1 : 0,
           'use_config_manage_stock' => 1,
           'use_config_min_qty' => 1,
           'use_config_min_sale_qty' => 1,
@@ -104,48 +71,81 @@ module MagentoIntegration
           'use_config_backorders' => 1,
           'use_config_notify_stock_qty' => 1
         }
-        if payload[:product][:quantity]
-          wombat_product['stock_data'][:qty] = payload[:product][:quantity].to_s
-          wombat_product['stock_data']['is_in_stock'] = (payload[:product][:quantity].to_f > 0) ? 1 : 0
-        end
 
-        add_new = !update
-
-        if update
-          begin
-            result = @soapClient.call :catalog_product_update, {
-                :type => 'simple',
-                :product => payload[:product][:id], #product_id will be sku
-                :product_data => wombat_product
-            }
-            if result.body[:catalog_product_update_response][:result]
-              total += 1
-            end
-          rescue => e
-            if e.message.include? "101"
-              add_new = true
-            else
-              raise e.message
-            end
-          end
-        end
-
-        if add_new
+        if !update
           result = @soapClient.call :catalog_product_create, {
-              :type => 'simple',
-              :set => attribute_set[:set_id],
-              :sku => payload[:product][:id], #product_id will be sku
-              :product_data => wombat_product
+            :type => 'simple',
+            :set => attribute_set[:set_id],
+            :sku => variant[:sku],
+            :product_data => variant_product
           }
           if result.body[:catalog_product_create_response][:result]
             total += 1
           end
+        
+          add_images(variant[:sku], variant[:images].count > 0 ? variant[:images] : payload[:product][:images])
+        else
+          result = @soapClient.call :catalog_product_update, {
+              :type => 'simple',
+              :product => variant[:sku],
+              :product_data => variant_product
+          }
+          if result.body[:catalog_product_update_response][:result]
+            total += 1
+          end
         end
-
+      end
+    else
+      wombat_product['stock_data'] = {
+        'use_config_manage_stock' => 1,
+        'use_config_min_qty' => 1,
+        'use_config_min_sale_qty' => 1,
+        'use_config_max_sale_qty' => 1,
+        'use_config_backorders' => 1,
+        'use_config_notify_stock_qty' => 1
+      }
+      if payload[:product][:quantity]
+        wombat_product['stock_data'][:qty] = payload[:product][:quantity].to_s
+        wombat_product['stock_data']['is_in_stock'] = (payload[:product][:quantity].to_f > 0) ? 1 : 0
       end
 
-      return total
+      add_new = !update
+
+      if update
+        begin
+          result = @soapClient.call :catalog_product_update, {
+              :type => 'simple',
+              :product => payload[:product][:id], #product_id will be sku
+              :product_data => wombat_product
+          }
+          if result.body[:catalog_product_update_response][:result]
+            total += 1
+          end
+        rescue => e
+          if e.message.include? "101"
+            add_new = true
+          else
+            raise e.message
+          end
+        end
+      end
+
+      if add_new
+        result = @soapClient.call :catalog_product_create, {
+            :type => 'simple',
+            :set => attribute_set[:set_id],
+            :sku => payload[:product][:id], #product_id will be sku
+            :product_data => wombat_product
+        }
+        if result.body[:catalog_product_create_response][:result]
+          total += 1
+        end
+      end
+
     end
+
+    return total
+  end
 
 	def set_inventory(payload)
 	  product = {
@@ -156,7 +156,7 @@ module MagentoIntegration
 	  
 	  result = @soapClient.call :catalog_product_update, {
       :type => 'simple',
-      :product => payload[:inventory][:product_id],
+      :product => payload[:inventory][:sku],
       :product_data => product
     }
 
