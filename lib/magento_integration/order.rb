@@ -49,8 +49,12 @@ module MagentoIntegration
 
         i = 1
         invoices.each do |invoice|
+          invoiceResponse = @soapClient.call :sales_order_invoice_info, { :invoice_increment_id => invoice[:increment_id] }
+          invoice_data = invoiceResponse.body[:sales_order_invoice_info_response][:result]
+          puts invoice_data
           payments.push({
               :number => i,
+              :invoice_id => invoice[:increment_id],
               :status => get_order_status(order[:status]),
               :amount => invoice[:grand_total].to_f,
               :payment_method => payment_method
@@ -92,7 +96,6 @@ module MagentoIntegration
 
         placed_date = Time.parse(order[:created_at])
         upated_date = Time.parse(order[:updated_at])
-
         wombat_order = {
           :id => order[:increment_id],
           :magento_order_id => order[:order_id],
@@ -108,6 +111,7 @@ module MagentoIntegration
           :line_items => lineItems,
           :adjustments => adjustments,
           :billing_address => address_m_to_w(order[:billing_address]),
+          :shipping_address => address_m_to_w(order[:shipping_address]),
           :shipping_method => order[:shipping_method],
           :total_refunded => order[:total_refunded],
           :total_due => order[:total_due],
