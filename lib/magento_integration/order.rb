@@ -23,44 +23,114 @@ module MagentoIntegration
 
       magento_orders = convert_to_array(orders[:sales_order_list_response][:result][:item])
       magento_orders.each do |order|
+        # Get Order Info
         orderResponse = @soapClient.call :sales_order_info, { :order_increment_id => order[:increment_id] }
-
         order = orderResponse.body[:sales_order_info_response][:result]
 
-        payments = Array.new
-
-        invoices_complex_filter = Hash.new
-        invoices_complex_filter['key'] = "order_id"
-        invoices_complex_filter['value'] = {
-            :key => "eq",
-            :value => order[:order_id]
-        }
-
-        invoices_response = @soapClient.call :sales_order_invoice_list, {
-            :filters => {
-                'complex_filter' => [[invoices_complex_filter]]
-            }
-        }
-
-        invoices = convert_to_array(invoices_response.body[:sales_order_invoice_list_response][:result][:item])
-
-        order_payments = convert_to_array(order[:payment])
-        payment_method = (order_payments && order_payments.count) ? order_payments[0][:method] : 'no method'
-
-        i = 1
-        invoices.each do |invoice|
-          invoiceResponse = @soapClient.call :sales_order_invoice_info, { :invoice_increment_id => invoice[:increment_id] }
-          invoice_data = invoiceResponse.body[:sales_order_invoice_info_response][:result]
-          puts invoice_data
-          payments.push({
-              :number => i,
-              :invoice_id => invoice[:increment_id],
-              :status => get_order_status(order[:status]),
-              :amount => invoice[:grand_total].to_f,
-              :payment_method => payment_method
-          })
-          i += 1
+        # Get Customer Info
+        customer_list_response = @soapClient.call :customer_customer_list, { :email => order[:customer_email] }
+        if customer_list_response.body[:customer_customer_list_response][:store_view][:item].respond_to?(:length)
+          customer_id = customer_list_response.body[:customer_customer_list_response][:store_view][:item][0][:customer_id]
+        else
+          customer_id = customer_list_response.body[:customer_customer_list_response][:store_view][:item][:customer_id]
         end
+        customer_response = @soapClient.call :customer_customer_info, { :customer_id => customer_id }
+        customer = customer_response.body[:customer_customer_info_response][:customer_info]
+
+        # Shipment Info
+        shipment_complex_filter = Hash.new
+        shipment_complex_filter['key'] = "created_at"
+        shipment_complex_filter['value'] = {
+            :key => "from",
+            :value => order[:created_at]
+        }
+
+        sales_order_shipment_response = @soapClient.call :sales_order_shipment_list, {
+          :filters => {
+            'complex_filter' => [[shipment_complex_filter]]
+          }
+        }
+
+        shipments = sales_order_shipment_response.body
+        magento_shipments = convert_to_array(shipments[:sales_order_shipment_list_response][:result][:item])
+
+        puts "*****************************"
+        puts magento_shipments
+        # List of shipments does not allow filtering by order id??
+        # Getting a shipment's info has the order ID, so we need to get ALL shipments and then filter out those without the current order's id on them
+        magento_shipments.each do |shipment|
+          shipment_response = @soapClient.call :sales_order_shipment_info, { :shipment_increment_id => shipment[:increment_id] }
+          shipment = shipment_response.body[:sales_order_shipment_info_response][:result]
+          if shipment[:order_id] != order[:increment_id]
+            # Build out shipment object here
+          end
+        end
+
+        # # Invoice Info
+        # invoices_complex_filter = Hash.new
+        # invoices_complex_filter['key'] = "order_id"
+        # invoices_complex_filter['value'] = {
+        #     :key => "eq",
+        #     :value => order[:order_id]
+        # }
+
+        # invoices_response = @soapClient.call :sales_order_invoice_list, {
+        #     :filters => {
+        #         'complex_filter' => [[invoices_complex_filter]]
+        #     }
+        # }
+
+        # invoices = convert_to_array(invoices_response.body[:sales_order_invoice_list_response][:result][:item])
+
+
+
+        # TODO: Make REST API call here. We need to:
+        # 1. Get the coupon code for discounts. 
+        # ----If no coupon code, we should apply any discounts per line item
+        # ----If there is a code, we apply the discount to the whole order
+
+
+
+        # Manipulate customer data / make other calls for the customer
+        # customer_address_list_response = @soapClient.call :customer_address_list, { :customer_id => customer_id }
+        # customer_address_list = customer_address_list_response.body[:customer_address_list_response][:result][:item]
+        # customer_address_list.each do |c|
+        #   customer_address_response = @soapClient.call :customer_address_info, { :address_id => c[:customer_address_id] }
+        # end
+
+        # customer_address_response = @soapClient.call :customer_address_info, { :address_id => order[:billing_address][:address_id] }
+        
+        # customer_address_response = @soapClient.call :customer_address_info, { :address_id => order[:shipping_address][:address_id] }
+        
+
+
+
+        # TODO: Need to build 2 separate objects here:
+        # - Invoice Array
+        # - Payments Array
+        # payments = Array.new
+
+        # order_payments = convert_to_array(order[:payment])
+        # payment_method = (order_payments && order_payments.count) ? order_payments[0][:method] : 'no method'
+
+        # i = 1
+        # invoices.each do |invoice|
+        #   invoiceResponse = @soapClient.call :sales_order_invoice_info, { :invoice_increment_id => invoice[:increment_id] }
+        #   invoice_data = invoiceResponse.body[:sales_order_invoice_info_response][:result]
+        #   # puts "*************************************"
+        #   # puts invoice
+        #   # puts invoice_data
+        #   payments.push({
+        #       :number => i,
+        #       :invoice_id => invoice[:increment_id],
+        #       # :shipping_date => 
+        #       # :status => get_order_status(order[:status]), No need for status as the status will be updated based on payments
+        #       :exchange_rate => order[:store_to_order_rate],
+        #       :amount => invoice[:grand_total].to_f,
+        #       :payment_method => payment_method
+        #   })
+        #   i += 1
+        # end
 
         orderTotal = {
           :item => order[:subtotal].to_f,
@@ -94,55 +164,71 @@ module MagentoIntegration
           :discount => orderTotal[:discount]
         })
 
+        comments = Array.new
+        hist_items = order[:status_history][:item]
+        unless hist_items.nil?
+          hist_items = [hist_items] if !hist_items.kind_of?(Array)
+          hist_items.each do |h|
+            puts h
+            c  = h.fetch(:comment, "")
+            comments << c
+          end
+        end
+
+        # puts 'xzxxzxzxzxzxzxzxzxxzxzxzxzzxzxz'
+        # puts order[:increment_id]
+        # puts order.to_json
+
         placed_date = Time.parse(order[:created_at])
         upated_date = Time.parse(order[:updated_at])
         wombat_order = {
+          :placed_on => placed_date.utc.iso8601,
           :id => order[:increment_id],
-          :magento_order_id => order[:order_id],
           :magento_increment_id => order[:increment_id],
           :status => get_order_status(order[:status]),
-          :email => order[:customer_email],
-          :currency => order[:order_currency_code],
-          :placed_on => placed_date.utc.iso8601,
-          :updated_at => upated_date.utc.iso8601,
-          :discount => order[:discount_amount],
-          :totals => orderTotal,
-          :payments => payments,
-          :line_items => lineItems,
-          :adjustments => adjustments,
-          :billing_address => address_m_to_w(order[:billing_address]),
-          :shipping_address => address_m_to_w(order[:shipping_address]),
-          :shipping_method => order[:shipping_method],
-          :total_refunded => order[:total_refunded],
-          :total_due => order[:total_due],
-          :comments => concat_comments(order[:status_history][:item]),
-          :total_qty_ordered => order[:total_qty_ordered],
-          :store_to_base_rate => order[:store_to_base_rate],
-          :store_to_order_rate => order[:store_to_order_rate],
-          :weight => order[:weight],
-          :store_name => order[:store_name],
-          :order_state => order[:state],
-          :global_currency_code => order[:global_currency_code],
-          :store_currency_code => order[:store_currency_code],
-          :shipping_description => order[:shipping_description],
           :customer_firstname => order[:customer_firstname],
           :customer_lastname => order[:customer_lastname],
           :customer_name => getFullName(order),
-          :is_virtual => order[:is_virtual],
-          :customer_note_notify => order[:customer_note_notify],
-          :customer_is_guest => order[:customer_is_guest],
-          :email_sent => order[:email_sent],
-          :store_id=> order[:store_id],
-          :total_canceled=> order[:total_canceled],
-          :base_tax_amount=> order[:base_tax_amount],
-          :base_shipping_amount=> order[:base_shipping_amount],
-          :base_discount_amount=> order[:base_discount_amount],
-          :base_subtotal=> order[:base_subtotal],
-          :base_grand_total=> order[:base_grand_total],
-          :base_total_canceled=> order[:base_total_canceled],
-          :base_to_global_rate=> order[:base_to_global_rate],
-          :base_to_order_rate=> order[:base_to_order_rate],
-          :base_currency_code=> order[:base_currency_code]
+          :currency => order[:order_currency_code],
+          :shipping_method => order[:shipping_method],
+          :exchange_rate => order[:store_to_order_rate],
+          :comments => comments,
+          :billing_address => address_m_to_w(order[:billing_address]),
+          :shipping_address => address_m_to_w(order[:shipping_address]),
+          :updated_at => upated_date.utc.iso8601,
+          :magento_order_id => order[:order_id],
+          :shipping_price => order[:shipping_amount],
+          :email => order[:customer_email],
+          :discount => order[:discount_amount],
+          :totals => orderTotal,
+          # :payments => payments,
+          :line_items => lineItems,
+          :adjustments => adjustments,
+          # :total_refunded => order[:total_refunded],
+          # :total_due => order[:total_due],
+          # :total_qty_ordered => order[:total_qty_ordered],
+          # :store_to_base_rate => order[:store_to_base_rate],
+          # :weight => order[:weight],
+          # :store_name => order[:store_name],
+          # :order_state => order[:state],
+          # :global_currency_code => order[:global_currency_code],
+          # :store_currency_code => order[:store_currency_code],
+          # :shipping_description => order[:shipping_description],
+          # :is_virtual => order[:is_virtual],
+          # :customer_note_notify => order[:customer_note_notify],
+          # :customer_is_guest => order[:customer_is_guest],
+          # :email_sent => order[:email_sent],
+          # :store_id=> order[:store_id],
+          # :total_canceled=> order[:total_canceled],
+          # :base_tax_amount=> order[:base_tax_amount],
+          # :base_shipping_amount=> order[:base_shipping_amount],
+          # :base_discount_amount=> order[:base_discount_amount],
+          # :base_subtotal=> order[:base_subtotal],
+          # :base_grand_total=> order[:base_grand_total],
+          # :base_total_canceled=> order[:base_total_canceled],
+          # :base_to_global_rate=> order[:base_to_global_rate],
+          # :base_to_order_rate=> order[:base_to_order_rate],
+          # :base_currency_code=> order[:base_currency_code]
         }
 
         if @soapClient.config[:connection_name]
@@ -328,19 +414,6 @@ module MagentoIntegration
           return "pending"
       end
       return status
-    end
-
-    def concat_comments(items)
-      comments = ""
-      unless items.nil?
-        items = [items] if !items.kind_of?(Array)
-        items.each do |i|
-          c = i.fetch(:comment, "")
-          comments += "#{c} --- " if c != ""
-        end
-        comments.chomp!(' --- ')
-      end
-      comments
     end
 
     def getFullName(order)

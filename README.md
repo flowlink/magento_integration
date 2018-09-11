@@ -15,7 +15,7 @@ Perform the following commands to setup your development environment:
 ```sh
 $ docker rm -f magento-integration-container
 $ docker build -t magento-integration .
-$ docker run -t -e VIRTUAL_HOST=magento_integration.flowlink.io -e RAILS_ENV=development -v $PWD:/app -p 3001:5000 --name magento-integration-container magento-integration
+$ docker run -t -e VIRTUAL_HOST=magento_integration.flowlink.io -e RAILS_ENV=development -v $PWD:/app -p 3000:5000 --name magento-integration-container magento-integration
 ```
 
 Then access the local integration at http://localhost:3001
