@@ -1,6 +1,7 @@
 require "sinatra"
 require "endpoint_base"
 require "json"
+require 'honeybadger'
 
 require File.expand_path(File.dirname(__FILE__) + '/lib/magento_integration')
 
@@ -18,6 +19,10 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
   end
 
   before do
+  end
+
+  get '/' do
+    "yay"
   end
 
   post '/get_orders' do
