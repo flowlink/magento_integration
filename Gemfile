@@ -24,6 +24,7 @@ group :test do
   gem 'rspec', '~> 2.14'
   gem 'rack-test'
   gem 'webmock'
+  gem 'simplecov', require: false
 end
 
 group :test, :development do
