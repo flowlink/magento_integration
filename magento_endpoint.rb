@@ -27,7 +27,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
   post '/get_orders' do
     begin
-      order = MagentoIntegration::Order.new(get_client(@config))
+      order = MagentoIntegration::Order.new(@config)
       orders = order.get_orders(@config[:since])
 
       orders.each { |o| add_object 'order', o }
@@ -50,7 +50,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
   post '/get_invoices' do
     begin
-      invoice = MagentoIntegration::Invoice.new(get_client(@config))
+      invoice = MagentoIntegration::Invoice.new(@config)
       invoices = invoice.get_invoices(@config[:since])
 
       invoices.each { |o| add_object 'invoice', o }
@@ -68,7 +68,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
   post '/cancel_order' do
     begin
-      order = MagentoIntegration::Order.new(get_client(@config))
+      order = MagentoIntegration::Order.new(@config)
       status = order.cancel_order(@payload)
 
       if status
@@ -84,7 +84,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
   post '/add_shipment' do
     begin
-      order = MagentoIntegration::Order.new(get_client(@config))
+      order = MagentoIntegration::Order.new(@config)
       shipment_increment_id = order.add_shipment(@payload)
 
       shipment = { id: @payload[:shipment][:id], magento_shipment_increment_id: shipment_increment_id }
@@ -99,7 +99,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
   post '/add_product' do
     begin
-      product = MagentoIntegration::Product.new(get_client(@config))
+      product = MagentoIntegration::Product.new(@config)
       no_products = product.add_product(@payload, false)
 
       if status
@@ -115,7 +115,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
   post '/update_product' do
     begin
-      product = MagentoIntegration::Product.new(get_client(@config))
+      product = MagentoIntegration::Product.new(@config)
       status = product.add_product(@payload, true)
 
       if status
@@ -131,7 +131,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
   post '/set_inventory' do
     begin
-      product = MagentoIntegration::Product.new(get_client(@config))
+      product = MagentoIntegration::Product.new(@config)
       status = product.set_inventory(@payload)
 
       if status
@@ -143,12 +143,5 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
       puts e.backtrace
       result 500, "Unable to set inventory details inside Magento. Error: #{e.message}"
     end
-  end
-
-  private
-
-  def get_client(config)
-    @client ||= MagentoIntegration::Services::Base.new(config)
-    @client
   end
 end

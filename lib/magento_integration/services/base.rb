@@ -5,7 +5,7 @@ require 'mechanize'
 
 module MagentoIntegration
   module Services
-    class Base
+    class Soap
       attr_reader :config
       attr_reader :client
       # attr_reader :rest_client
@@ -18,7 +18,7 @@ module MagentoIntegration
 
       def initialize(config)
         @config = config
-        
+
         @client = Savon.client(wsdl: "#{@config[:store_url]}/index.php/api/v2_soap?wsdl", :log => false)
 
 
@@ -42,19 +42,19 @@ module MagentoIntegration
           :site => url
         )
       end
-    
+
       def request_token(args = {})
         args[:consumer].get_request_token(:oauth_callback => url)
       end
-    
+
       def get_authorize_url(args = {})
         # args[:request_token].authorize_url(:oauth_callback => url)
         args[:request_token].authorize_url()
       end
-    
+
       def authorize_application(args = {})
         m = Mechanize.new
-    
+
         m.get(args[:authorize_url]) do |login_page|
           puts login_page
           puts login_page.inspect
@@ -62,25 +62,25 @@ module MagentoIntegration
             form.elements[1].value = admin_username
             form.elements[2].value = admin_password
           end.submit
-    
+
           authorize_form = auth_page.forms[0]
-    
+
           @callback_page = authorize_form.submit
         end
         puts "callback page: #{@callback_page.uri}"
         @callback_page.uri.to_s
       end
-    
+
       def extract_oauth_verifier(args = {})
         # callback_page = /https:\/\/[^\/]*\/(.*)/.match("#{args[:callback_page]}")
         # callback_page_query_string = CGI::parse(callback_page[0])
         # puts "CALLBACK Q: #{callback_page_query_string}"
-    
+
         # callback_page_query_string['oauth_verifier'][0]
         callback_page = /(.*)([?])([o].*)([=])(.*)/.match("#{args[:callback_page]}")
         callback_page
       end
-    
+
       def get_access_token(args = {})
         begin
           response = args[:request_token].get_access_token(:oauth_verifier => args[:oauth_verifier])
@@ -91,19 +91,19 @@ module MagentoIntegration
         end
         response
       end
-    
+
       def save_tokens_to_json(args = {})
         auth = {}
-    
+
         auth[:time] = Time.now
         auth[:token] = args[:access_token].token
         auth[:secret] = args[:access_token].secret
-    
+
         File.open("#{args[:path]}#{args[:filename]}.json", 'w') {|f| f.write(auth.to_json)}
-    
+
         auth
       end
-    
+
       def get_new_access_tokens
         # Create the consumer object
         new_consumer = self.create_consumer
@@ -121,7 +121,7 @@ module MagentoIntegration
         puts "OAUTH VERIFIER: #{extract_new_oauth_verifier}"
         new_access_token = self.get_access_token(request_token: new_request_token, oauth_verifier: extract_new_oauth_verifier)
         save_tokens_to_json(filename: 'magento_oauth_access_tokens', path: '/', access_token: new_access_token)
-    
+
         return 'Successfully obtained new access tokens.'
       end
 
@@ -163,14 +163,14 @@ module MagentoIntegration
       # def get_access_token(args = {})
       #   args[:request_token].get_access_token(:oauth_verifier => args[:oauth_verifier])
       # end
-      
+
       def login
         response = @client.call(:login, message: { :username => @config[:api_username], :apiKey => @config[:api_key] } )
         # TODO catch access failed
 
         @session = response.body[:login_response][:login_return]
       end
-      
+
       def call(method, arguments = {})
         arguments.merge!( :session_id => @session )
 

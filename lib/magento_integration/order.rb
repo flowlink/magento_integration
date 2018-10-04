@@ -2,7 +2,7 @@ require 'json'
 
 module MagentoIntegration
   class Order < Base
-    
+
     def get_orders(since_time)
       complex_filter = Hash.new
       complex_filter['key'] = "updated_at"
@@ -11,7 +11,7 @@ module MagentoIntegration
           :value => since_time
       }
 
-      response = @soapClient.call :sales_order_list, {
+      response = soap_client.call :sales_order_list, {
         :filters => {
           'complex_filter' => [[complex_filter]]
         }
@@ -24,17 +24,17 @@ module MagentoIntegration
       magento_orders = convert_to_array(orders[:sales_order_list_response][:result][:item])
       magento_orders.each do |order|
         # Get Order Info
-        orderResponse = @soapClient.call :sales_order_info, { :order_increment_id => order[:increment_id] }
+        orderResponse = soap_client.call :sales_order_info, { :order_increment_id => order[:increment_id] }
         order = orderResponse.body[:sales_order_info_response][:result]
 
         # Get Customer Info
-        customer_list_response = @soapClient.call :customer_customer_list, { :email => order[:customer_email] }
+        customer_list_response = soap_client.call :customer_customer_list, { :email => order[:customer_email] }
         if customer_list_response.body[:customer_customer_list_response][:store_view][:item].respond_to?(:length)
           customer_id = customer_list_response.body[:customer_customer_list_response][:store_view][:item][0][:customer_id]
         else
           customer_id = customer_list_response.body[:customer_customer_list_response][:store_view][:item][:customer_id]
         end
-        customer_response = @soapClient.call :customer_customer_info, { :customer_id => customer_id }
+        customer_response = soap_client.call :customer_customer_info, { :customer_id => customer_id }
         customer = customer_response.body[:customer_customer_info_response][:customer_info]
 
         # Shipment Info
@@ -45,7 +45,7 @@ module MagentoIntegration
             :value => order[:created_at]
         }
 
-        sales_order_shipment_response = @soapClient.call :sales_order_shipment_list, {
+        sales_order_shipment_response = soap_client.call :sales_order_shipment_list, {
           :filters => {
             'complex_filter' => [[shipment_complex_filter]]
           }
@@ -59,7 +59,7 @@ module MagentoIntegration
         # List of shipments does not allow filtering by order id??
         # Getting a shipment's info has the order ID, so we need to get ALL shipments and then filter out those without the current order's id on them
         magento_shipments.each do |shipment|
-          shipment_response = @soapClient.call :sales_order_shipment_info, { :shipment_increment_id => shipment[:increment_id] }
+          shipment_response = soap_client.call :sales_order_shipment_info, { :shipment_increment_id => shipment[:increment_id] }
           shipment = shipment_response.body[:sales_order_shipment_info_response][:result]
           if shipment[:order_id] != order[:increment_id]
             # Build out shipment object here
@@ -74,7 +74,7 @@ module MagentoIntegration
         #     :value => order[:order_id]
         # }
 
-        # invoices_response = @soapClient.call :sales_order_invoice_list, {
+        # invoices_response = soap_client.call :sales_order_invoice_list, {
         #     :filters => {
         #         'complex_filter' => [[invoices_complex_filter]]
         #     }
@@ -85,23 +85,23 @@ module MagentoIntegration
 
 
         # TODO: Make REST API call here. We need to:
-        # 1. Get the coupon code for discounts. 
+        # 1. Get the coupon code for discounts.
         # ----If no coupon code, we should apply any discounts per line item
         # ----If there is a code, we apply the discount to the whole order
 
 
 
         # Manipulate customer data / make other calls for the customer
-        # customer_address_list_response = @soapClient.call :customer_address_list, { :customer_id => customer_id }
+        # customer_address_list_response = soap_client.call :customer_address_list, { :customer_id => customer_id }
         # customer_address_list = customer_address_list_response.body[:customer_address_list_response][:result][:item]
         # customer_address_list.each do |c|
-        #   customer_address_response = @soapClient.call :customer_address_info, { :address_id => c[:customer_address_id] }
+        #   customer_address_response = soap_client.call :customer_address_info, { :address_id => c[:customer_address_id] }
         # end
 
-        # customer_address_response = @soapClient.call :customer_address_info, { :address_id => order[:billing_address][:address_id] }
-        
-        # customer_address_response = @soapClient.call :customer_address_info, { :address_id => order[:shipping_address][:address_id] }
-        
+        # customer_address_response = soap_client.call :customer_address_info, { :address_id => order[:billing_address][:address_id] }
+
+        # customer_address_response = soap_client.call :customer_address_info, { :address_id => order[:shipping_address][:address_id] }
+
 
 
 
@@ -115,7 +115,7 @@ module MagentoIntegration
 
         # i = 1
         # invoices.each do |invoice|
-        #   invoiceResponse = @soapClient.call :sales_order_invoice_info, { :invoice_increment_id => invoice[:increment_id] }
+        #   invoiceResponse = soap_client.call :sales_order_invoice_info, { :invoice_increment_id => invoice[:increment_id] }
         #   invoice_data = invoiceResponse.body[:sales_order_invoice_info_response][:result]
         #   # puts "*************************************"
         #   # puts invoice
@@ -123,7 +123,7 @@ module MagentoIntegration
         #   payments.push({
         #       :number => i,
         #       :invoice_id => invoice[:increment_id],
-        #       # :shipping_date => 
+        #       # :shipping_date =>
         #       # :status => get_order_status(order[:status]), No need for status as the status will be updated based on payments
         #       :exchange_rate => order[:store_to_order_rate],
         #       :amount => invoice[:grand_total].to_f,
@@ -231,10 +231,10 @@ module MagentoIntegration
           # :base_currency_code=> order[:base_currency_code]
         }
 
-        if @soapClient.config[:connection_name]
-          wombat_order[:channel] = @soapClient.config[:connection_name]
-          wombat_order[:source] = @soapClient.config[:connection_name]
-          wombat_order[:id] = sprintf("%s-%s", @soapClient.config[:connection_name], wombat_order[:id])
+        if soap_client.config[:connection_name]
+          wombat_order[:channel] = soap_client.config[:connection_name]
+          wombat_order[:source] = soap_client.config[:connection_name]
+          wombat_order[:id] = sprintf("%s-%s", soap_client.config[:connection_name], wombat_order[:id])
         end
 
         wombat_orders.push(wombat_order)
@@ -242,10 +242,10 @@ module MagentoIntegration
 
       wombat_orders
     end
-    
+
     def get_shipment_objects(orders)
       wombat_shipments = Array.new
-      
+
       orders.each do | order |
         shipment = {
           :id => order[:id],
@@ -258,17 +258,17 @@ module MagentoIntegration
           :shipping_address => order[:shipping_address],
           :billing_address => order[:billing_address]
         }
-        
+
         wombat_shipments.push(shipment)
       end
-      
+
       return wombat_shipments
     end
 
     def cancel_order(payload)
       payload[:order][:id] = remove_connection_name(payload[:order][:id])
 
-      order_response = @soapClient.call :sales_order_cancel, { :order_increment_id => payload[:order][:id] }
+      order_response = soap_client.call :sales_order_cancel, { :order_increment_id => payload[:order][:id] }
 
       order_response.body[:sales_order_cancel_response][:result]
     end
@@ -276,7 +276,7 @@ module MagentoIntegration
     def add_shipment(payload)
       payload[:shipment][:order_id] = remove_connection_name(payload[:shipment][:order_id])
 
-      order_response = @soapClient.call :sales_order_info, { :order_increment_id => payload[:shipment][:order_id] }
+      order_response = soap_client.call :sales_order_info, { :order_increment_id => payload[:shipment][:order_id] }
 
       order = order_response.body[:sales_order_info_response][:result]
 
@@ -300,7 +300,7 @@ module MagentoIntegration
         end
       end
 
-      shipment_increment_id = @soapClient.call :sales_order_shipment_create, {
+      shipment_increment_id = soap_client.call :sales_order_shipment_create, {
                             :order_increment_id => payload[:shipment][:order_id],
                             :items_qty => items_to_send,
                             :email => 1
@@ -320,7 +320,7 @@ module MagentoIntegration
         carrier_code = 'fedex'
       end
         if carrier_code
-          @soapClient.call :sales_order_shipment_add_track, {
+          soap_client.call :sales_order_shipment_add_track, {
               :shipment_increment_id => shipment_increment_id,
               :carrier => carrier_code,
               :title => payload[:shipment][:shipping_method],
@@ -328,8 +328,8 @@ module MagentoIntegration
           }
       end
 
-      if @soapClient.config[:connection_name]
-        shipment_increment_id = sprintf("%s-%s", @soapClient.config[:connection_name], shipment_increment_id)
+      if soap_client.config[:connection_name]
+        shipment_increment_id = sprintf("%s-%s", soap_client.config[:connection_name], shipment_increment_id)
       end
 
       shipment_increment_id
@@ -393,8 +393,8 @@ module MagentoIntegration
     end
 
     def remove_connection_name(string)
-      if (@soapClient.config[:connection_name]) && (string.include? "#{@soapClient.config[:connection_name]}-")
-        return string["#{@soapClient.config[:connection_name]}-".length, string.length]
+      if (soap_client.config[:connection_name]) && (string.include? "#{soap_client.config[:connection_name]}-")
+        return string["#{soap_client.config[:connection_name]}-".length, string.length]
       end
 
       string

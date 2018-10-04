@@ -4,7 +4,7 @@ module MagentoIntegration
   class Invoice < Base
     attr_reader :magento_invoice
     attr_reader :order
-    
+
     def get_invoices(since_time)
       complex_filter = Hash.new
       complex_filter['key'] = "updated_at"
@@ -13,7 +13,7 @@ module MagentoIntegration
           :value => since_time
       }
 
-      invoices_response = @soapClient.call :sales_order_invoice_list, {
+      invoices_response = soap_client.call :sales_order_invoice_list, {
         :filters => {
             'complex_filter' => [[complex_filter]]
         }
@@ -24,19 +24,19 @@ module MagentoIntegration
 
       magento_invoices = convert_to_array(invoices_response.body[:sales_order_invoice_list_response][:result][:item])
       magento_invoices.each do |invoice|
-        invoiceResponse = @soapClient.call :sales_order_invoice_info, { :invoice_increment_id => invoice[:increment_id] }
+        invoiceResponse = soap_client.call :sales_order_invoice_info, { :invoice_increment_id => invoice[:increment_id] }
         @magento_invoice = invoiceResponse.body[:sales_order_invoice_info_response][:result]
 
         # Get Order
-        orderResponse = @soapClient.call :sales_order_info, { :order_increment_id => @magento_invoice[:order_increment_id] }
+        orderResponse = soap_client.call :sales_order_info, { :order_increment_id => @magento_invoice[:order_increment_id] }
         @order = orderResponse.body[:sales_order_info_response][:result]
 
         flowlink_invoice = to_flowlink_invoice
 
-        if @soapClient.config[:connection_name]
-          flowlink_invoice[:channel] = @soapClient.config[:connection_name]
-          flowlink_invoice[:source] = @soapClient.config[:connection_name]
-          flowlink_invoice[:id] = sprintf("%s-%s", @soapClient.config[:connection_name], flowlink_invoice[:id])
+        if soap_client.config[:connection_name]
+          flowlink_invoice[:channel] = soap_client.config[:connection_name]
+          flowlink_invoice[:source] = soap_client.config[:connection_name]
+          flowlink_invoice[:id] = sprintf("%s-%s", soap_client.config[:connection_name], flowlink_invoice[:id])
         end
 
         flowlink_invoices.push(flowlink_invoice)
@@ -79,7 +79,7 @@ module MagentoIntegration
       return [] if payments.empty?
       flowlink_payments = Array.new
       # payment_method = (payments && payments.count) ? payments[0][:method] : 'no method'
-      
+
       payments[0][:item].each do |payment|
         # TODO: Map payments here
         # flowlink_payments.push(payment)

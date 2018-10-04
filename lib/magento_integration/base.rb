@@ -4,9 +4,8 @@ module MagentoIntegration
   class Base
     attr_reader :soapClient
 
-    def initialize(client)
-      # @soapClient = MagentoIntegration::Services::Base.new(config);
-      @soapClient = client
+    def initialize(config)
+      @config = config
     end
 
     def convert_to_array(object)
@@ -19,6 +18,12 @@ module MagentoIntegration
       end
 
       result
+    end
+
+    private
+
+    def soap_client
+      @soap_client ||= MagentoIntegration::Services::Soap.new(@config)
     end
   end
 end
