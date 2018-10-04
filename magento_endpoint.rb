@@ -37,7 +37,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
         shipments.each { |s| add_object 'shipment', s }
       end
 
-      line = orders.count > 0 ? "Received #{orders.count} #{'order'.pluralize orders.count} from Magento" : 'No new/updated orders found'
+      line = orders.count.positive ? "Received #{orders.count} #{'order'.pluralize orders.count} from Magento" : 'No new/updated orders found'
 
       add_parameter 'since', Time.now.utc.iso8601
 
@@ -55,7 +55,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
       invoices.each { |o| add_object 'invoice', o }
 
-      line = invoices.count > 0 ? "Received #{invoices.count} #{'invoice'.pluralize invoices.count} from Magento" : 'No  new/updated invoices found'
+      line = invoices.count.positive? ? "Received #{invoices.count} #{'invoice'.pluralize invoices.count} from Magento" : 'No  new/updated invoices found'
 
       add_parameter 'since', Time.now.utc.iso8601
 
