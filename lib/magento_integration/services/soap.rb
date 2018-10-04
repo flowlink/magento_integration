@@ -14,14 +14,14 @@ module MagentoIntegration
 
       def initialize(config)
         @config = config
-        login
+        @session = login
       end
 
       def login
         response = client.call(:login, message: { username: @config[:api_username], apiKey: @config[:api_key] })
         # TODO: catch access failed
 
-        @session = response.body[:login_response][:login_return]
+        response.body[:login_response][:login_return]
       end
 
       def call(method, arguments = {})
