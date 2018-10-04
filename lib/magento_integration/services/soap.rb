@@ -26,10 +26,7 @@ module MagentoIntegration
 
       def call(method, arguments = {})
         arguments[:session_id] = @session
-
-        response = client.call(method, message: arguments)
-
-        response
+        client.call(method, message: arguments)
       end
 
       private
