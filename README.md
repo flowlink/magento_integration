@@ -18,6 +18,12 @@ $ docker build -t magento-integration .
 $ docker run -t -e VIRTUAL_HOST=magento_integration.flowlink.io -e RAILS_ENV=development -v $PWD:/app -p 3000:5000 --name magento-integration-container magento-integration
 ```
 
+OR
+
+```bash
+docker-compose up
+```
+
 Then access the local integration at http://localhost:3001
 
 ## Connection Parameters

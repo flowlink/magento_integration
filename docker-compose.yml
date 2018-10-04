@@ -1,0 +1,12 @@
+version: "2"
+
+services:
+  magento-integration:
+    build: .
+    environment:
+      - VIRTUAL_HOST=magento_integration.flowlink.io
+      - RAILS_ENV=development
+    ports:
+      - 3001:5000
+    volumes:
+      - .:/app
