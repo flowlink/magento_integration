@@ -24,6 +24,12 @@ OR
 docker-compose up
 ```
 
+## For running tests
+
+```bash
+docker-compose run --rm magento-integration bundle exec rspec
+```
+
 Then access the local integration at http://localhost:3001
 
 ## Connection Parameters
