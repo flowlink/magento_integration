@@ -1,17 +1,17 @@
-require "sinatra"
-require "endpoint_base"
-require "json"
+# frozen_string_literal: true
+
+require 'sinatra'
+require 'endpoint_base'
+require 'json'
 require 'honeybadger'
 
 require File.expand_path(File.dirname(__FILE__) + '/lib/magento_integration')
 
 class MagentoEndpoint < EndpointBase::Sinatra::Base
-
-  #endpoint_key ENV["ENDPOINT_KEY"]
+  # endpoint_key ENV["ENDPOINT_KEY"]
   attr_reader :client
 
   Honeybadger.configure do |config|
-
   end
 
   error Savon::SOAPFault do
@@ -22,7 +22,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
   end
 
   get '/' do
-    "yay"
+    'yay'
   end
 
   post '/get_orders' do
@@ -37,12 +37,12 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
         shipments.each { |s| add_object 'shipment', s }
       end
 
-      line = orders.count > 0 ? "Received #{orders.count} #{"order".pluralize orders.count} from Magento" : "No new/updated orders found"
+      line = orders.count > 0 ? "Received #{orders.count} #{'order'.pluralize orders.count} from Magento" : 'No new/updated orders found'
 
       add_parameter 'since', Time.now.utc.iso8601
 
       result 200, line
-    rescue => e
+    rescue StandardError => e
       puts e.backtrace
       result 500, "Unable to get orders from Magento. Error: #{e.message}"
     end
@@ -55,12 +55,12 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
       invoices.each { |o| add_object 'invoice', o }
 
-      line = invoices.count > 0 ? "Received #{invoices.count} #{"invoice".pluralize invoices.count} from Magento" : "No  new/updated invoices found"
+      line = invoices.count > 0 ? "Received #{invoices.count} #{'invoice'.pluralize invoices.count} from Magento" : 'No  new/updated invoices found'
 
       add_parameter 'since', Time.now.utc.iso8601
 
       result 200, line
-    rescue => e
+    rescue StandardError => e
       puts e.backtrace
       result 500, "Unable to get invoices from Magento. Error: #{e.message}"
     end
@@ -72,11 +72,11 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
       status = order.cancel_order(@payload)
 
       if status
-        result 200, "Order has been succcessfuly canceled"
+        result 200, 'Order has been succcessfuly canceled'
       else
-        result 500, "Error while trying to cancel the order"
+        result 500, 'Error while trying to cancel the order'
       end
-    rescue => e
+    rescue StandardError => e
       puts e.backtrace
       result 500, "Unable to cancel order. Error: #{e.message}"
     end
@@ -87,11 +87,11 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
       order = MagentoIntegration::Order.new(get_client(@config))
       shipment_increment_id = order.add_shipment(@payload)
 
-      shipment = { :id => @payload[:shipment][:id], :magento_shipment_increment_id => shipment_increment_id }
+      shipment = { id: @payload[:shipment][:id], magento_shipment_increment_id: shipment_increment_id }
       add_object 'shipment', shipment
 
       result 200, "The shipment #{@payload[:shipment][:id]} was sent to Magento"
-    rescue => e
+    rescue StandardError => e
       puts e.backtrace
       result 500, "Unable to send shipment details to Magento. Error: #{e.message}"
     end
@@ -105,9 +105,9 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
       if status
         result 200, "Successfully sent #{no_products} products to Magento store"
       else
-        result 500, "Error while trying to send product(s) to Magento"
+        result 500, 'Error while trying to send product(s) to Magento'
       end
-    rescue => e
+    rescue StandardError => e
       puts e.backtrace
       result 500, "Unable to send product(s) to Magento. Error: #{e.message}"
     end
@@ -119,11 +119,11 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
       status = product.add_product(@payload, true)
 
       if status
-        result 200, "Product successfully updated"
+        result 200, 'Product successfully updated'
       else
-        result 500, "Error while trying to update product"
+        result 500, 'Error while trying to update product'
       end
-    rescue => e
+    rescue StandardError => e
       puts e.backtrace
       result 500, "Unable to send product to Magento. Error: #{e.message}"
     end
@@ -135,11 +135,11 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
       status = product.set_inventory(@payload)
 
       if status
-        result 200, "Inventory successfully set"
+        result 200, 'Inventory successfully set'
       else
-        result 500, "Error while trying to set inventory"
-	  end
-    rescue => e
+        result 500, 'Error while trying to set inventory'
+    end
+    rescue StandardError => e
       puts e.backtrace
       result 500, "Unable to set inventory details inside Magento. Error: #{e.message}"
     end
@@ -148,10 +148,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
   private
 
   def get_client(config)
-    if !@client
-      @client = MagentoIntegration::Services::Base.new(config)
-    end
-    return @client
+    @client ||= MagentoIntegration::Services::Base.new(config)
+    @client
   end
-
 end
