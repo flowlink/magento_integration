@@ -49,8 +49,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
   post '/get_invoices' do
     begin
-      invoice = MagentoIntegration::Invoice.new(@config)
-      invoices = invoice.get_invoices(@config[:since])
+      invoices = MagentoIntegration::Invoice.new(@config).get_invoices
 
       invoices.each { |o| add_object 'invoice', o }
 

@@ -5,12 +5,12 @@ module MagentoIntegration
     attr_reader :magento_invoice
     attr_reader :order
 
-    def get_invoices(since_time)
+    def get_invoices
       complex_filter = Hash.new
       complex_filter['key'] = "updated_at"
       complex_filter['value'] = {
           :key => "from",
-          :value => since_time
+          :value => @config[:since]
       }
 
       invoices_response = soap_client.call :sales_order_invoice_list, {
