@@ -21,5 +21,9 @@ module MagentoIntegration
     def soap_client
       @soap_client ||= MagentoIntegration::Services::Soap.new(@config)
     end
+
+    def rest_client
+      @rest_client ||= MagentoIntegration::Services::Rest.new(@config)
+    end
   end
 end
