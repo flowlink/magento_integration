@@ -8,16 +8,12 @@ module MagentoIntegration
       @config = config
     end
 
+    # TODO: remove this method from this class, it does not belong here.
     def convert_to_array(object)
-      result = []
+      return object if object.is_a?(Array)
+      return [object] if object.present?
 
-      if object.is_a?(Array)
-        result = object
-      elsif !object.nil?
-        result.push(object)
-      end
-
-      result
+      []
     end
 
     private
