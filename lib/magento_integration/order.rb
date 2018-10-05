@@ -1,65 +1,64 @@
+# frozen_string_literal: true
+
 require 'json'
 
 module MagentoIntegration
   class Order < Base
-
     def get_orders
-      complex_filter = Hash.new
-      complex_filter['key'] = "updated_at"
+      complex_filter = {}
+      complex_filter['key'] = 'updated_at'
       complex_filter['value'] = {
-          :key => "from",
-          :value => @config[:since]
+        key: 'from',
+        value: @config[:since]
       }
 
-      response = soap_client.call :sales_order_list, {
-        :filters => {
-          'complex_filter' => [[complex_filter]]
-        }
-      }
+      response = soap_client.call :sales_order_list,
+                                  filters: {
+                                    'complex_filter' => [[complex_filter]]
+                                  }
 
-      wombat_orders = Array.new
+      wombat_orders = []
 
       orders = response.body
 
       magento_orders = convert_to_array(orders[:sales_order_list_response][:result][:item])
       magento_orders.each do |order|
         # Get Order Info
-        orderResponse = soap_client.call :sales_order_info, { :order_increment_id => order[:increment_id] }
+        orderResponse = soap_client.call :sales_order_info, order_increment_id: order[:increment_id]
         order = orderResponse.body[:sales_order_info_response][:result]
 
         # Get Customer Info
-        customer_list_response = soap_client.call :customer_customer_list, { :email => order[:customer_email] }
+        customer_list_response = soap_client.call :customer_customer_list, email: order[:customer_email]
         if customer_list_response.body[:customer_customer_list_response][:store_view][:item].respond_to?(:length)
           customer_id = customer_list_response.body[:customer_customer_list_response][:store_view][:item][0][:customer_id]
         else
           customer_id = customer_list_response.body[:customer_customer_list_response][:store_view][:item][:customer_id]
         end
-        customer_response = soap_client.call :customer_customer_info, { :customer_id => customer_id }
+        customer_response = soap_client.call :customer_customer_info, customer_id: customer_id
         customer = customer_response.body[:customer_customer_info_response][:customer_info]
 
         # Shipment Info
-        shipment_complex_filter = Hash.new
-        shipment_complex_filter['key'] = "created_at"
+        shipment_complex_filter = {}
+        shipment_complex_filter['key'] = 'created_at'
         shipment_complex_filter['value'] = {
-            :key => "from",
-            :value => order[:created_at]
+          key: 'from',
+          value: order[:created_at]
         }
 
-        sales_order_shipment_response = soap_client.call :sales_order_shipment_list, {
-          :filters => {
-            'complex_filter' => [[shipment_complex_filter]]
-          }
-        }
+        sales_order_shipment_response = soap_client.call :sales_order_shipment_list,
+                                                         filters: {
+                                                           'complex_filter' => [[shipment_complex_filter]]
+                                                         }
 
         shipments = sales_order_shipment_response.body
         magento_shipments = convert_to_array(shipments[:sales_order_shipment_list_response][:result][:item])
 
-        puts "*****************************"
+        puts '*****************************'
         puts magento_shipments
         # List of shipments does not allow filtering by order id??
         # Getting a shipment's info has the order ID, so we need to get ALL shipments and then filter out those without the current order's id on them
         magento_shipments.each do |shipment|
-          shipment_response = soap_client.call :sales_order_shipment_info, { :shipment_increment_id => shipment[:increment_id] }
+          shipment_response = soap_client.call :sales_order_shipment_info, shipment_increment_id: shipment[:increment_id]
           shipment = shipment_response.body[:sales_order_shipment_info_response][:result]
           if shipment[:order_id] != order[:increment_id]
             # Build out shipment object here
@@ -82,14 +81,10 @@ module MagentoIntegration
 
         # invoices = convert_to_array(invoices_response.body[:sales_order_invoice_list_response][:result][:item])
 
-
-
         # TODO: Make REST API call here. We need to:
         # 1. Get the coupon code for discounts.
         # ----If no coupon code, we should apply any discounts per line item
         # ----If there is a code, we apply the discount to the whole order
-
-
 
         # Manipulate customer data / make other calls for the customer
         # customer_address_list_response = soap_client.call :customer_address_list, { :customer_id => customer_id }
@@ -101,9 +96,6 @@ module MagentoIntegration
         # customer_address_response = soap_client.call :customer_address_info, { :address_id => order[:billing_address][:address_id] }
 
         # customer_address_response = soap_client.call :customer_address_info, { :address_id => order[:shipping_address][:address_id] }
-
-
-
 
         # TODO: Need to build 2 separate objects here:
         # - Invoice Array
@@ -133,16 +125,16 @@ module MagentoIntegration
         # end
 
         orderTotal = {
-          :item => order[:subtotal].to_f,
-          :adjustment => order[:subtotal].to_f + order[:tax_amount].to_f + order[:shipping_tax_amount].to_f + order[:discount_amount].to_f,
-          :tax => order[:tax_amount].to_f + order[:shipping_tax_amount].to_f,
-          :shipping => order[:shipping_amount].to_f,
-          :discount => order[:discount_amount].to_f,
-          :payment => order[:total_paid].to_f,
-          :order => order[:grand_total].to_f
+          item: order[:subtotal].to_f,
+          adjustment: order[:subtotal].to_f + order[:tax_amount].to_f + order[:shipping_tax_amount].to_f + order[:discount_amount].to_f,
+          tax: order[:tax_amount].to_f + order[:shipping_tax_amount].to_f,
+          shipping: order[:shipping_amount].to_f,
+          discount: order[:discount_amount].to_f,
+          payment: order[:total_paid].to_f,
+          order: order[:grand_total].to_f
         }
 
-        lineItems = Array.new
+        lineItems = []
 
         order_items = convert_to_array(order[:items][:item])
 
@@ -150,27 +142,27 @@ module MagentoIntegration
           lineItems.push(item_m_to_w(item))
         end
 
-        adjustments = Array.new
-        adjustments.push({
-          :name => 'Tax',
-          :tax => orderTotal[:tax]
-        })
-        adjustments.push({
-          :name => 'Shipping',
-          :shipping => orderTotal[:shipping]
-        })
-        adjustments.push({
-          :name => 'Discount',
-          :discount => orderTotal[:discount]
-        })
+        adjustments = []
+        adjustments.push(
+          name: 'Tax',
+          tax: orderTotal[:tax]
+        )
+        adjustments.push(
+          name: 'Shipping',
+          shipping: orderTotal[:shipping]
+        )
+        adjustments.push(
+          name: 'Discount',
+          discount: orderTotal[:discount]
+        )
 
-        comments = Array.new
+        comments = []
         hist_items = order[:status_history][:item]
         unless hist_items.nil?
-          hist_items = [hist_items] if !hist_items.kind_of?(Array)
+          hist_items = [hist_items] unless hist_items.is_a?(Array)
           hist_items.each do |h|
             puts h
-            c  = h.fetch(:comment, "")
+            c = h.fetch(:comment, '')
             comments << c
           end
         end
@@ -182,28 +174,28 @@ module MagentoIntegration
         placed_date = Time.parse(order[:created_at])
         upated_date = Time.parse(order[:updated_at])
         wombat_order = {
-          :placed_on => placed_date.utc.iso8601,
-          :id => order[:increment_id],
-          :magento_increment_id => order[:increment_id],
-          :status => get_order_status(order[:status]),
-          :customer_firstname => order[:customer_firstname],
-          :customer_lastname => order[:customer_lastname],
-          :customer_name => getFullName(order),
-          :currency => order[:order_currency_code],
-          :shipping_method => order[:shipping_method],
-          :exchange_rate => order[:store_to_order_rate],
-          :comments => comments,
-          :billing_address => address_m_to_w(order[:billing_address]),
-          :shipping_address => address_m_to_w(order[:shipping_address]),
-          :updated_at => upated_date.utc.iso8601,
-          :magento_order_id => order[:order_id],
-          :shipping_price => order[:shipping_amount],
-          :email => order[:customer_email],
-          :discount => order[:discount_amount],
-          :totals => orderTotal,
+          placed_on: placed_date.utc.iso8601,
+          id: order[:increment_id],
+          magento_increment_id: order[:increment_id],
+          status: get_order_status(order[:status]),
+          customer_firstname: order[:customer_firstname],
+          customer_lastname: order[:customer_lastname],
+          customer_name: getFullName(order),
+          currency: order[:order_currency_code],
+          shipping_method: order[:shipping_method],
+          exchange_rate: order[:store_to_order_rate],
+          comments: comments,
+          billing_address: address_m_to_w(order[:billing_address]),
+          shipping_address: address_m_to_w(order[:shipping_address]),
+          updated_at: upated_date.utc.iso8601,
+          magento_order_id: order[:order_id],
+          shipping_price: order[:shipping_amount],
+          email: order[:customer_email],
+          discount: order[:discount_amount],
+          totals: orderTotal,
           # :payments => payments,
-          :line_items => lineItems,
-          :adjustments => adjustments,
+          line_items: lineItems,
+          adjustments: adjustments,
           # :total_refunded => order[:total_refunded],
           # :total_due => order[:total_due],
           # :total_qty_ordered => order[:total_qty_ordered],
@@ -234,7 +226,7 @@ module MagentoIntegration
         if soap_client.config[:connection_name]
           wombat_order[:channel] = soap_client.config[:connection_name]
           wombat_order[:source] = soap_client.config[:connection_name]
-          wombat_order[:id] = sprintf("%s-%s", soap_client.config[:connection_name], wombat_order[:id])
+          wombat_order[:id] = format('%s-%s', soap_client.config[:connection_name], wombat_order[:id])
         end
 
         wombat_orders.push(wombat_order)
@@ -244,31 +236,31 @@ module MagentoIntegration
     end
 
     def get_shipment_objects(orders)
-      wombat_shipments = Array.new
+      wombat_shipments = []
 
-      orders.each do | order |
+      orders.each do |order|
         shipment = {
-          :id => order[:id],
-          :order_id => order[:id],
-          :status => "ready",
-          :email => order[:email],
-          :shipping_method => order[:shipping_method],
-          :totals => order[:totals],
-          :items => order[:line_items],
-          :shipping_address => order[:shipping_address],
-          :billing_address => order[:billing_address]
+          id: order[:id],
+          order_id: order[:id],
+          status: 'ready',
+          email: order[:email],
+          shipping_method: order[:shipping_method],
+          totals: order[:totals],
+          items: order[:line_items],
+          shipping_address: order[:shipping_address],
+          billing_address: order[:billing_address]
         }
 
         wombat_shipments.push(shipment)
       end
 
-      return wombat_shipments
+      wombat_shipments
     end
 
     def cancel_order(payload)
       payload[:order][:id] = remove_connection_name(payload[:order][:id])
 
-      order_response = soap_client.call :sales_order_cancel, { :order_increment_id => payload[:order][:id] }
+      order_response = soap_client.call :sales_order_cancel, order_increment_id: payload[:order][:id]
 
       order_response.body[:sales_order_cancel_response][:result]
     end
@@ -276,35 +268,33 @@ module MagentoIntegration
     def add_shipment(payload)
       payload[:shipment][:order_id] = remove_connection_name(payload[:shipment][:order_id])
 
-      order_response = soap_client.call :sales_order_info, { :order_increment_id => payload[:shipment][:order_id] }
+      order_response = soap_client.call :sales_order_info, order_increment_id: payload[:shipment][:order_id]
 
       order = order_response.body[:sales_order_info_response][:result]
 
-      items_to_send = Array.new
+      items_to_send = []
 
       order_items = convert_to_array(order[:items][:item])
 
       order_items.each do |item|
-
         shipment_items = convert_to_array(payload[:shipment][:items])
 
         shipment_items.each do |shipped_item|
-          if shipped_item[:product_id] == item[:sku]
-            item_to_send = {
-                :order_item_id => item[:item_id],
-                :qty => shipped_item[:quantity].to_f
-            }
-            items_to_send.push(item_to_send)
-            break
-          end
+          next unless shipped_item[:product_id] == item[:sku]
+
+          item_to_send = {
+            order_item_id: item[:item_id],
+            qty: shipped_item[:quantity].to_f
+          }
+          items_to_send.push(item_to_send)
+          break
         end
       end
 
-      shipment_increment_id = soap_client.call :sales_order_shipment_create, {
-                            :order_increment_id => payload[:shipment][:order_id],
-                            :items_qty => items_to_send,
-                            :email => 1
-                          }
+      shipment_increment_id = soap_client.call :sales_order_shipment_create,
+                                               order_increment_id: payload[:shipment][:order_id],
+                                               items_qty: items_to_send,
+                                               email: 1
 
       shipment_increment_id = shipment_increment_id.body[:sales_order_shipment_create_response][:shipment_increment_id]
 
@@ -312,24 +302,23 @@ module MagentoIntegration
       shipping_method = payload[:shipment][:shipping_method].downcase
       if shipping_method.include? 'dhl'
         carrier_code = 'dhlint'
-      elsif shipping_method.include? 'ups' or shipping_method.include? 'united parcel service'
+      elsif shipping_method.include?('ups') || shipping_method.include?('united parcel service')
         carrier_code = 'ups'
-      elsif shipping_method.include? 'usps' or shipping_method.include? 'united states postal service'
+      elsif shipping_method.include?('usps') || shipping_method.include?('united states postal service')
         carrier_code = 'usps'
-      elsif shipping_method.include? 'fedex' or shipping_method.include? 'federal express'
+      elsif shipping_method.include?('fedex') || shipping_method.include?('federal express')
         carrier_code = 'fedex'
       end
-        if carrier_code
-          soap_client.call :sales_order_shipment_add_track, {
-              :shipment_increment_id => shipment_increment_id,
-              :carrier => carrier_code,
-              :title => payload[:shipment][:shipping_method],
-              :track_number => payload[:shipment][:tracking]
-          }
-      end
+      if carrier_code
+        soap_client.call :sales_order_shipment_add_track,
+                         shipment_increment_id: shipment_increment_id,
+                         carrier: carrier_code,
+                         title: payload[:shipment][:shipping_method],
+                         track_number: payload[:shipment][:tracking]
+    end
 
       if soap_client.config[:connection_name]
-        shipment_increment_id = sprintf("%s-%s", soap_client.config[:connection_name], shipment_increment_id)
+        shipment_increment_id = format('%s-%s', soap_client.config[:connection_name], shipment_increment_id)
       end
 
       shipment_increment_id
@@ -339,37 +328,37 @@ module MagentoIntegration
 
     def item_m_to_w(item)
       lineItem = {
-        :product_id => item[:sku],
-        :sku => item[:sku],
-        :name => item[:name],
-        :quantity => item[:qty_ordered].to_f,
-        :price => item[:price].to_f,
-        :product_type => item[:product_type],
-        :weight => item[:weight],
-        :qty_canceled => item[:qty_canceled],
-        :qty_invoiced => item[:qty_invoiced],
-        :qty_refunded => item[:qty_refunded],
-        :qty_shipped => item[:qty_shipped],
-        :base_price => item[:base_price],
-        :original_price => item[:original_price],
-        :base_original_price => item[:base_original_price],
-        :tax_percent => item[:tax_percent],
-        :tax_amount => item[:tax_amount],
-        :base_tax_amount => item[:base_tax_amount],
-        :tax_invoiced => item[:tax_invoiced],
-        :base_tax_invoiced => item[:base_tax_invoiced],
-        :discount_percent => item[:discount_percent],
-        :discount_amount => item[:discount_amount],
-        :base_discount_amount => item[:base_discount_amount],
-        :discount_invoiced => item[:discount_invoiced],
-        :base_discount_invoiced => item[:base_discount_invoiced],
-        :amount_refunded => item[:amount_refunded],
-        :base_amount_refunded => item[:base_amount_refunded],
-        :row_total => item[:row_total],
-        :base_row_total => item[:base_row_total],
-        :row_invoiced => item[:row_invoiced],
-        :base_row_invoiced => item[:base_row_invoiced],
-        :row_weight => item[:row_weight]
+        product_id: item[:sku],
+        sku: item[:sku],
+        name: item[:name],
+        quantity: item[:qty_ordered].to_f,
+        price: item[:price].to_f,
+        product_type: item[:product_type],
+        weight: item[:weight],
+        qty_canceled: item[:qty_canceled],
+        qty_invoiced: item[:qty_invoiced],
+        qty_refunded: item[:qty_refunded],
+        qty_shipped: item[:qty_shipped],
+        base_price: item[:base_price],
+        original_price: item[:original_price],
+        base_original_price: item[:base_original_price],
+        tax_percent: item[:tax_percent],
+        tax_amount: item[:tax_amount],
+        base_tax_amount: item[:base_tax_amount],
+        tax_invoiced: item[:tax_invoiced],
+        base_tax_invoiced: item[:base_tax_invoiced],
+        discount_percent: item[:discount_percent],
+        discount_amount: item[:discount_amount],
+        base_discount_amount: item[:base_discount_amount],
+        discount_invoiced: item[:discount_invoiced],
+        base_discount_invoiced: item[:base_discount_invoiced],
+        amount_refunded: item[:amount_refunded],
+        base_amount_refunded: item[:base_amount_refunded],
+        row_total: item[:row_total],
+        base_row_total: item[:base_row_total],
+        row_invoiced: item[:row_invoiced],
+        base_row_invoiced: item[:base_row_invoiced],
+        row_weight: item[:row_weight]
       }
 
       lineItem
@@ -377,23 +366,23 @@ module MagentoIntegration
 
     def address_m_to_w(address)
       addressObject = {
-          :firstname => address[:firstname],
-          :lastname => address[:lastname],
-          :company => address[:company],
-          :address1 => address[:street],
-          :zipcode => address[:postcode],
-          :city => address[:city],
-          :state => address[:region],
-          :country => address[:country_id],
-          :phone => address[:telephone],
-          :address_type => address[:address_type]
+        firstname: address[:firstname],
+        lastname: address[:lastname],
+        company: address[:company],
+        address1: address[:street],
+        zipcode: address[:postcode],
+        city: address[:city],
+        state: address[:region],
+        country: address[:country_id],
+        phone: address[:telephone],
+        address_type: address[:address_type]
       }
 
       addressObject
     end
 
     def remove_connection_name(string)
-      if (soap_client.config[:connection_name]) && (string.include? "#{soap_client.config[:connection_name]}-")
+      if soap_client.config[:connection_name] && (string.include? "#{soap_client.config[:connection_name]}-")
         return string["#{soap_client.config[:connection_name]}-".length, string.length]
       end
 
@@ -402,18 +391,18 @@ module MagentoIntegration
 
     def get_order_status(status)
       case status
-        when "processing"
-          return "completed"
-        when "complete"
-          return "completed"
-        when "pending_payment"
-          return "pending"
-        when "payment_review"
-          return "payment"
-        when "pending_paypal"
-          return "pending"
+      when 'processing'
+        return 'completed'
+      when 'complete'
+        return 'completed'
+      when 'pending_payment'
+        return 'pending'
+      when 'payment_review'
+        return 'payment'
+      when 'pending_paypal'
+        return 'pending'
       end
-      return status
+      status
     end
 
     def getFullName(order)
