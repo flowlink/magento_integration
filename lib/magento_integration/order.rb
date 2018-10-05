@@ -3,12 +3,12 @@ require 'json'
 module MagentoIntegration
   class Order < Base
 
-    def get_orders(since_time)
+    def get_orders
       complex_filter = Hash.new
       complex_filter['key'] = "updated_at"
       complex_filter['value'] = {
           :key => "from",
-          :value => since_time
+          :value => @config[:since]
       }
 
       response = soap_client.call :sales_order_list, {

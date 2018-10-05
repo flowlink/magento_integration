@@ -27,8 +27,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
   post '/get_orders' do
     begin
-      order = MagentoIntegration::Order.new(@config)
-      orders = order.get_orders(@config[:since])
+      orders = MagentoIntegration::Order.new(@config).get_orders
 
       orders.each { |o| add_object 'order', o }
 
