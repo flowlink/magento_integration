@@ -2,7 +2,6 @@
 
 module MagentoIntegration
   class Base
-    attr_reader :soapClient
 
     def initialize(config)
       @config = config
