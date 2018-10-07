@@ -47,17 +47,6 @@ module MagentoIntegration
         # order_payments = convert_to_array(order[:payment])
         # payment_method = (order_payments && order_payments.count) ? order_payments[0][:method] : 'no method'
 
-        comments = []
-        hist_items = order[:status_history][:item]
-        unless hist_items.nil?
-          hist_items = [hist_items] unless hist_items.is_a?(Array)
-          hist_items.each do |h|
-            puts h
-            c = h.fetch(:comment, '')
-            comments << c
-          end
-        end
-
         # puts 'xzxxzxzxzxzxzxzxzxxzxzxzxzzxzxz'
         # puts order[:increment_id]
         # puts order.to_json
@@ -75,7 +64,7 @@ module MagentoIntegration
           currency: order[:order_currency_code],
           shipping_method: order[:shipping_method],
           exchange_rate: order[:store_to_order_rate],
-          comments: comments,
+          comments: comments(order),
           billing_address: address_m_to_w(order[:billing_address]),
           shipping_address: address_m_to_w(order[:shipping_address]),
           updated_at: upated_date.utc.iso8601,
@@ -368,6 +357,18 @@ module MagentoIntegration
       order_items.map do |item|
         item_magento_to_flowlink(item)
       end
+    end
+
+    def comments(order)
+      comments = []
+      hist_items = order[:status_history][:item]
+      unless hist_items.nil?
+        hist_items = [hist_items] unless hist_items.is_a?(Array)
+        hist_items.each do |h|
+          comments << h.fetch(:comment, '')
+        end
+      end
+      comments
     end
   end
 end
