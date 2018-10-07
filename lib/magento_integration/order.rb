@@ -9,18 +9,10 @@ module MagentoIntegration
       magento_orders = get_orders_since(@config[:since])
       magento_orders.each do |order|
         # Get Order Info
-        orderResponse = soap_client.call :sales_order_info, order_increment_id: order[:increment_id]
-        order = orderResponse.body[:sales_order_info_response][:result]
+        order = get_order_info_by_id(order[:increment_id])
 
         # Get Customer Info
-        customer_list_response = soap_client.call :customer_customer_list, email: order[:customer_email]
-        if customer_list_response.body[:customer_customer_list_response][:store_view][:item].respond_to?(:length)
-          customer_id = customer_list_response.body[:customer_customer_list_response][:store_view][:item][0][:customer_id]
-        else
-          customer_id = customer_list_response.body[:customer_customer_list_response][:store_view][:item][:customer_id]
-        end
-        customer_response = soap_client.call :customer_customer_info, customer_id: customer_id
-        customer = customer_response.body[:customer_customer_info_response][:customer_info]
+        customer = get_customer_info_by_email(order[:customer_email])
 
         # Shipment Info
         shipment_complex_filter = {}
@@ -397,21 +389,41 @@ module MagentoIntegration
     private
 
     def get_orders_since(since)
-      complex_filter = {}
-      complex_filter['key'] = 'updated_at'
-      complex_filter['value'] = {
-        key: 'from',
-        value: since
-      }
-
+      complex_filter = [[{
+        key: 'updated_at',
+        value: {
+          key: 'from',
+          value: since
+        }
+      }]]
       response = soap_client.call :sales_order_list,
                                   filters: {
-                                    'complex_filter' => [[complex_filter]]
+                                    'complex_filter' => complex_filter
                                   }
-
       orders = response.body
+      convert_to_array(orders[:sales_order_list_response][:result][:item])
+    end
 
-      magento_orders = convert_to_array(orders[:sales_order_list_response][:result][:item])
+    def get_order_info_by_id(id)
+      order = soap_client.call(:sales_order_info, order_increment_id: id)
+      order.body[:sales_order_info_response][:result]
+    end
+
+    # TODO: Extract this method to a ::Customer class
+    def get_customer_info_by_email(email)
+      customer_list_response = soap_client.call(:customer_customer_list, email: email)
+      customer_list = customer_list_response.body[:customer_customer_list_response][:store_view][:item]
+      # binding.pry
+      # if customer_list.is_a?(Array)
+      #   customer_id = customer_list[0][:customer_id]
+      # else
+      #   customer_id = customer_list[:customer_id]
+      # end
+      # customer_response = soap_client.call(:customer_customer_info, customer_id: customer_id)
+      # customer_response.body[:customer_customer_info_response][:customer_info]
+
+      return customer_list[0] if customer_list.is_a?(Array)
+      customer_list
     end
   end
 end
