@@ -371,9 +371,7 @@ module MagentoIntegration
     def get_orders_since(since)
       response = soap_client.call(:sales_order_list,
                                   filters: filters('updated_at', 'from', since))
-      orders = response.body
-
-      convert_to_array(orders[:sales_order_list_response][:result][:item])
+      convert_to_array(response.body[:sales_order_list_response][:result][:item])
     end
 
     # TODO: Extract this method to a Magento::Customer class
