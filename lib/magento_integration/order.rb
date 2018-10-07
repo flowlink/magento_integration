@@ -279,6 +279,18 @@ module MagentoIntegration
     end
 
     private
+    
+    ORDER_STATUS_MAPPING = {
+      'processing': 'completed',
+      'complete': 'completed',
+      'pending_payment': 'pending',
+      'payment_review': 'payment',
+      'pending_paypal': 'pending'
+    }.freeze
+
+    def get_order_status(status)
+      ORDER_STATUS_MAPPING[status]
+    end
 
     def item_m_to_w(item)
       lineItem = {
@@ -343,17 +355,6 @@ module MagentoIntegration
       string
     end
 
-    ORDER_STATUS_MAPPING = {
-      'processing': 'completed',
-      'complete': 'completed',
-      'pending_payment': 'pending',
-      'payment_review': 'payment',
-      'pending_paypal': 'pending'
-    }.freeze
-
-    def get_order_status(status)
-      ORDER_STATUS_MAPPING[status]
-    end
 
     def getFullName(order)
       "#{order[:customer_firstname]} #{order[:customer_lastname]}"
