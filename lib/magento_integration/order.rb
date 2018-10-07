@@ -47,25 +47,6 @@ module MagentoIntegration
         # order_payments = convert_to_array(order[:payment])
         # payment_method = (order_payments && order_payments.count) ? order_payments[0][:method] : 'no method'
 
-        # i = 1
-        # invoices.each do |invoice|
-        #   invoiceResponse = soap_client.call :sales_order_invoice_info, { :invoice_increment_id => invoice[:increment_id] }
-        #   invoice_data = invoiceResponse.body[:sales_order_invoice_info_response][:result]
-        #   # puts "*************************************"
-        #   # puts invoice
-        #   # puts invoice_data
-        #   payments.push({
-        #       :number => i,
-        #       :invoice_id => invoice[:increment_id],
-        #       # :shipping_date =>
-        #       # :status => get_order_status(order[:status]), No need for status as the status will be updated based on payments
-        #       :exchange_rate => order[:store_to_order_rate],
-        #       :amount => invoice[:grand_total].to_f,
-        #       :payment_method => payment_method
-        #   })
-        #   i += 1
-        # end
-
         binding.pry
 
         lineItems = []
