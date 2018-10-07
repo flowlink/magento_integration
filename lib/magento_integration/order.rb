@@ -65,8 +65,8 @@ module MagentoIntegration
           shipping_method: order[:shipping_method],
           exchange_rate: order[:store_to_order_rate],
           comments: comments(order),
-          billing_address: address_m_to_w(order[:billing_address]),
-          shipping_address: address_m_to_w(order[:shipping_address]),
+          billing_address: address_magento_to_flowlink(order[:billing_address]),
+          shipping_address: address_magento_to_flowlink(order[:shipping_address]),
           updated_at: upated_date.utc.iso8601,
           magento_order_id: order[:order_id],
           shipping_price: order[:shipping_amount],
@@ -254,8 +254,8 @@ module MagentoIntegration
       }
     end
 
-    def address_m_to_w(address)
-      addressObject = {
+    def address_magento_to_flowlink(address)
+      {
         firstname: address[:firstname],
         lastname: address[:lastname],
         company: address[:company],
@@ -267,8 +267,6 @@ module MagentoIntegration
         phone: address[:telephone],
         address_type: address[:address_type]
       }
-
-      addressObject
     end
 
     def remove_connection_name(string)
