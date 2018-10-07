@@ -376,11 +376,6 @@ module MagentoIntegration
       convert_to_array(orders[:sales_order_list_response][:result][:item])
     end
 
-    # def get_order_info_by_id(id)
-    #   order = soap_client.call(:sales_order_info, order_increment_id: id)
-    #   order.body[:sales_order_info_response][:result]
-    # end
-
     # TODO: Extract this method to a Magento::Customer class
     def get_customer_info_by_customer_id(customer_id)
       response = soap_client.call(:customer_customer_info,
