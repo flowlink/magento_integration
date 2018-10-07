@@ -8,13 +8,9 @@ module MagentoIntegration
       wombat_orders = []
       magento_orders = get_orders_since(@config[:since])
       magento_orders.each do |order|
-        # Get Order Info
-        # It looks like the order entity responded on the list request is the
-        # same one as responded on the info request
-        # current_order = get_order_info_by_id("100008956")
 
         # Get Customer Info
-        customer = get_customer_info_by_email(order[:customer_email])
+        customer = get_customer_info_by_customer_id(order[:customer_id])
 
         # Shipment Info
         shipment = get_shipment_info_by_order_id(order[:order_id])
@@ -386,22 +382,20 @@ module MagentoIntegration
     # end
 
     # TODO: Extract this method to a Magento::Customer class
-    def get_customer_info_by_email(email)
-      customer_list_response = soap_client.call(:customer_customer_list, email: email)
-      customer_list = customer_list_response.body[:customer_customer_list_response][:store_view][:item]
-
-      return customer_list[0] if customer_list.is_a?(Array)
-
-      customer_list
+    def get_customer_info_by_customer_id(customer_id)
+      response = soap_client.call(:customer_customer_info,
+                                  customerId: customer_id)
+      response.body[:customer_customer_info_response][:customer_info]
     end
 
     # # TODO: extract this method to a ::Shipment class
     def get_shipment_info_by_order_id(order_id)
+      order_id='100000005'
       sales_order_shipment_response = soap_client.call(:sales_order_shipment_list,
                                                        filters: filters('order_id', 'eq', order_id))
 
       binding.pry
-      sales_order_shipment_list = sales_order_shipment_response.body[:sales_order_shipment_list][:result][:item]
+      sales_order_shipment_list = sales_order_shipment_response.body[:sales_order_shipment_list_response][:result][:item]
 
       convert_to_array(sales_order_shipment_list)
 
