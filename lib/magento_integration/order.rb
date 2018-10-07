@@ -47,26 +47,6 @@ module MagentoIntegration
         # order_payments = convert_to_array(order[:payment])
         # payment_method = (order_payments && order_payments.count) ? order_payments[0][:method] : 'no method'
 
-        order_items = convert_to_array(order[:items][:item])
-
-        lineItems = order_items.map do |item|
-          item_magento_to_flowlink(item)
-        end
-
-        adjustments = []
-        adjustments.push(
-          name: 'Tax',
-          tax: order_total[:tax]
-        )
-        adjustments.push(
-          name: 'Shipping',
-          shipping: order_total[:shipping]
-        )
-        adjustments.push(
-          name: 'Discount',
-          discount: order_total[:discount]
-        )
-
         comments = []
         hist_items = order[:status_history][:item]
         unless hist_items.nil?
@@ -103,10 +83,10 @@ module MagentoIntegration
           shipping_price: order[:shipping_amount],
           email: order[:customer_email],
           discount: order[:discount_amount],
-          totals: order_total,
+          totals: order_total(order),
           # :payments => payments,
-          line_items: lineItems,
-          adjustments: adjustments,
+          line_items: order_items(order),
+          adjustments: adjustments(order),
           # :total_refunded => order[:total_refunded],
           # :total_due => order[:total_due],
           # :total_qty_ordered => order[:total_qty_ordered],
@@ -310,6 +290,16 @@ module MagentoIntegration
       string
     end
 
+    def adjustments(order)
+      total = order_total(order)
+      [{ name: 'Tax',
+         tax: total[:tax] },
+       { name: 'Shipping',
+         shipping: total[:shipping] },
+       { name: 'Discount',
+         discount: total[:discount] }]
+    end
+
     def order_total(order)
       {
         item: order[:subtotal].to_f,
@@ -371,6 +361,13 @@ module MagentoIntegration
         return shipment if shipment[:order_id] == order_id
       end
       {}
+    end
+
+    def order_items(order)
+      order_items = convert_to_array(order[:items][:item])
+      order_items.map do |item|
+        item_magento_to_flowlink(item)
+      end
     end
   end
 end
