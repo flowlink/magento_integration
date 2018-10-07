@@ -279,7 +279,7 @@ module MagentoIntegration
     end
 
     private
-    
+
     ORDER_STATUS_MAPPING = {
       'processing': 'completed',
       'complete': 'completed',
@@ -389,14 +389,6 @@ module MagentoIntegration
     def get_customer_info_by_email(email)
       customer_list_response = soap_client.call(:customer_customer_list, email: email)
       customer_list = customer_list_response.body[:customer_customer_list_response][:store_view][:item]
-      # binding.pry
-      # if customer_list.is_a?(Array)
-      #   customer_id = customer_list[0][:customer_id]
-      # else
-      #   customer_id = customer_list[:customer_id]
-      # end
-      # customer_response = soap_client.call(:customer_customer_info, customer_id: customer_id)
-      # customer_response.body[:customer_customer_info_response][:customer_info]
 
       return customer_list[0] if customer_list.is_a?(Array)
 
