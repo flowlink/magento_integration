@@ -47,14 +47,10 @@ module MagentoIntegration
         # order_payments = convert_to_array(order[:payment])
         # payment_method = (order_payments && order_payments.count) ? order_payments[0][:method] : 'no method'
 
-        binding.pry
-
-        lineItems = []
-
         order_items = convert_to_array(order[:items][:item])
 
-        order_items.each do |item|
-          lineItems.push(item_m_to_w(item))
+        lineItems = order_items.map do |item|
+          item_magento_to_flowlink(item)
         end
 
         adjustments = []
@@ -253,8 +249,8 @@ module MagentoIntegration
       ORDER_STATUS_MAPPING[status]
     end
 
-    def item_m_to_w(item)
-      lineItem = {
+    def item_magento_to_flowlink(item)
+      {
         product_id: item[:sku],
         sku: item[:sku],
         name: item[:name],
@@ -287,8 +283,6 @@ module MagentoIntegration
         base_row_invoiced: item[:base_row_invoiced],
         row_weight: item[:row_weight]
       }
-
-      lineItem
     end
 
     def address_m_to_w(address)
@@ -318,16 +312,15 @@ module MagentoIntegration
 
     def order_total(order)
       {
-                item: order[:subtotal].to_f,
-                adjustment: order[:subtotal].to_f + order[:tax_amount].to_f + order[:shipping_tax_amount].to_f + order[:discount_amount].to_f,
-                tax: order[:tax_amount].to_f + order[:shipping_tax_amount].to_f,
-                shipping: order[:shipping_amount].to_f,
-                discount: order[:discount_amount].to_f,
-                payment: order[:total_paid].to_f,
-                order: order[:grand_total].to_f
+        item: order[:subtotal].to_f,
+        adjustment: order[:subtotal].to_f + order[:tax_amount].to_f + order[:shipping_tax_amount].to_f + order[:discount_amount].to_f,
+        tax: order[:tax_amount].to_f + order[:shipping_tax_amount].to_f,
+        shipping: order[:shipping_amount].to_f,
+        discount: order[:discount_amount].to_f,
+        payment: order[:total_paid].to_f,
+        order: order[:grand_total].to_f
       }
     end
-
 
     def getFullName(order)
       "#{order[:customer_firstname]} #{order[:customer_lastname]}"
@@ -364,7 +357,6 @@ module MagentoIntegration
       response.body[:customer_customer_info_response][:customer_info]
     end
 
-
     def get_shipments
       response = soap_client.call(:sales_order_shipment_list)
       sales_order_shipment_list = response.body[:sales_order_shipment_list_response][:result][:item]
@@ -374,7 +366,7 @@ module MagentoIntegration
     # # TODO: extract this method to a ::Shipment class
     def get_shipment_info_by_order_id(order_id, shipments_list)
       shipments_list.each do |shipment|
-        response = soap_client.call( :sales_order_shipment_info, shipment_increment_id: shipment[:increment_id] )
+        response = soap_client.call(:sales_order_shipment_info, shipment_increment_id: shipment[:increment_id])
         shipment = response.body[:sales_order_shipment_info_response][:result]
         return shipment if shipment[:order_id] == order_id
       end
