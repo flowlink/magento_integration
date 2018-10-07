@@ -9,38 +9,15 @@ module MagentoIntegration
       magento_orders = get_orders_since(@config[:since])
       magento_orders.each do |order|
         # Get Order Info
-        order = get_order_info_by_id(order[:increment_id])
+        # It looks like the order entity responded on the list request is the
+        # same one as responded on the info request
+        # current_order = get_order_info_by_id("100008956")
 
         # Get Customer Info
         customer = get_customer_info_by_email(order[:customer_email])
 
         # Shipment Info
-        shipment_complex_filter = {}
-        shipment_complex_filter['key'] = 'created_at'
-        shipment_complex_filter['value'] = {
-          key: 'from',
-          value: order[:created_at]
-        }
-
-        sales_order_shipment_response = soap_client.call :sales_order_shipment_list,
-                                                         filters: {
-                                                           'complex_filter' => [[shipment_complex_filter]]
-                                                         }
-
-        shipments = sales_order_shipment_response.body
-        magento_shipments = convert_to_array(shipments[:sales_order_shipment_list_response][:result][:item])
-
-        puts '*****************************'
-        puts magento_shipments
-        # List of shipments does not allow filtering by order id??
-        # Getting a shipment's info has the order ID, so we need to get ALL shipments and then filter out those without the current order's id on them
-        magento_shipments.each do |shipment|
-          shipment_response = soap_client.call :sales_order_shipment_info, shipment_increment_id: shipment[:increment_id]
-          shipment = shipment_response.body[:sales_order_shipment_info_response][:result]
-          if shipment[:order_id] != order[:increment_id]
-            # Build out shipment object here
-          end
-        end
+        shipment = get_shipment_info_by_order_id(order[:order_id])
 
         # # Invoice Info
         # invoices_complex_filter = Hash.new
@@ -424,6 +401,43 @@ module MagentoIntegration
 
       return customer_list[0] if customer_list.is_a?(Array)
       customer_list
+    end
+
+    def get_shipment_info_by_order_id(order_id)
+      shipment_complex_filter = {
+        key: 'order_id',
+        value: {
+          key: 'eq',
+          value: order_id
+        }
+      }
+
+
+      sales_order_shipment_response = soap_client.call :sales_order_shipment_list,
+                                                       filters: {
+                                                         'complex_filter' => [[shipment_complex_filter]]
+                                                       }
+
+      shipments = sales_order_shipment_response.body
+
+      return shipments[0] if shipments.is_a?(Array)
+      shipments
+
+      # magento_shipments = convert_to_array(shipments[:sales_order_shipment_list_response][:result][:item])
+      #
+      #
+      #
+      # puts '*****************************'
+      # puts magento_shipments
+      # # List of shipments does not allow filtering by order id??
+      # # Getting a shipment's info has the order ID, so we need to get ALL shipments and then filter out those without the current order's id on them
+      # magento_shipments.each do |shipment|
+      #   shipment_response = soap_client.call :sales_order_shipment_info, shipment_increment_id: shipment[:increment_id]
+      #   shipment = shipment_response.body[:sales_order_shipment_info_response][:result]
+      #   if shipment[:order_id] != order[:increment_id]
+      #     # Build out shipment object here
+      #   end
+      # end
     end
   end
 end
