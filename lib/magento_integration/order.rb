@@ -9,7 +9,9 @@ module MagentoIntegration
       magento_orders = get_orders_since(@config[:since])
       magento_shipments = get_shipments
 
-      magento_orders.each do |order|
+      magento_orders.each do |magento_order|
+        # Get order details
+        order = get_order_info_by_id(magento_order[:increment_id])
 
         # Get Customer Info
         customer = get_customer_info_by_customer_id(order[:customer_id])
@@ -64,17 +66,7 @@ module MagentoIntegration
         #   i += 1
         # end
 
-        orderTotal = {
-          item: order[:subtotal].to_f,
-          adjustment: order[:subtotal].to_f + order[:tax_amount].to_f + order[:shipping_tax_amount].to_f + order[:discount_amount].to_f,
-          tax: order[:tax_amount].to_f + order[:shipping_tax_amount].to_f,
-          shipping: order[:shipping_amount].to_f,
-          discount: order[:discount_amount].to_f,
-          payment: order[:total_paid].to_f,
-          order: order[:grand_total].to_f
-        }
-
-
+        binding.pry
 
         lineItems = []
 
@@ -87,15 +79,15 @@ module MagentoIntegration
         adjustments = []
         adjustments.push(
           name: 'Tax',
-          tax: orderTotal[:tax]
+          tax: order_total[:tax]
         )
         adjustments.push(
           name: 'Shipping',
-          shipping: orderTotal[:shipping]
+          shipping: order_total[:shipping]
         )
         adjustments.push(
           name: 'Discount',
-          discount: orderTotal[:discount]
+          discount: order_total[:discount]
         )
 
         comments = []
@@ -134,7 +126,7 @@ module MagentoIntegration
           shipping_price: order[:shipping_amount],
           email: order[:customer_email],
           discount: order[:discount_amount],
-          totals: orderTotal,
+          totals: order_total,
           # :payments => payments,
           line_items: lineItems,
           adjustments: adjustments,
@@ -343,6 +335,18 @@ module MagentoIntegration
       string
     end
 
+    def order_total(order)
+      {
+                item: order[:subtotal].to_f,
+                adjustment: order[:subtotal].to_f + order[:tax_amount].to_f + order[:shipping_tax_amount].to_f + order[:discount_amount].to_f,
+                tax: order[:tax_amount].to_f + order[:shipping_tax_amount].to_f,
+                shipping: order[:shipping_amount].to_f,
+                discount: order[:discount_amount].to_f,
+                payment: order[:total_paid].to_f,
+                order: order[:grand_total].to_f
+      }
+    end
+
 
     def getFullName(order)
       "#{order[:customer_firstname]} #{order[:customer_lastname]}"
@@ -366,10 +370,16 @@ module MagentoIntegration
       convert_to_array(response.body[:sales_order_list_response][:result][:item])
     end
 
+    def get_order_info_by_id(increment_id)
+      response = soap_client.call(:sales_order_info,
+                                  order_increment_id: increment_id)
+      response.body[:sales_order_info_response][:result]
+    end
+
     # TODO: Extract this method to a Magento::Customer class
     def get_customer_info_by_customer_id(customer_id)
       response = soap_client.call(:customer_customer_info,
-                                  customerId: customer_id)
+                                  customer_id: customer_id)
       response.body[:customer_customer_info_response][:customer_info]
     end
 
@@ -385,11 +395,9 @@ module MagentoIntegration
       shipments_list.each do |shipment|
         response = soap_client.call( :sales_order_shipment_info, shipment_increment_id: shipment[:increment_id] )
         shipment = response.body[:sales_order_shipment_info_response][:result]
-        if shipment[:order_id] == order[:increment_id]
-          return shipment
-          # Build out shipment object here
-        end
+        return shipment if shipment[:order_id] == order_id
       end
+      {}
     end
   end
 end
