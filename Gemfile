@@ -16,7 +16,6 @@ gem 'airbrake'
 
 group :development do
   gem 'rake'
-  gem 'pry'
   gem 'shotgun'
 end
 
@@ -28,6 +27,7 @@ group :test do
 end
 
 group :test, :development do
+  gem 'pry'
   gem 'pry-byebug'
 end
 
