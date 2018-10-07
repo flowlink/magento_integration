@@ -6,6 +6,12 @@ services:
     environment:
       - VIRTUAL_HOST=magento_integration.flowlink.io
       - RAILS_ENV=development
+      - URL=***
+      - API_KEY=***
+      - API_PASSWORD=***
+      - API_USERNAME=***
+      - REST_KEY=***
+      - REST=***
     ports:
       - 3001:5000
     volumes:
