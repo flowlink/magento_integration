@@ -343,27 +343,21 @@ module MagentoIntegration
       string
     end
 
+    ORDER_STATUS_MAPPING = {
+      'processing': 'completed',
+      'complete': 'completed',
+      'pending_payment': 'pending',
+      'payment_review': 'payment',
+      'pending_paypal': 'pending'
+    }.freeze
+
     def get_order_status(status)
-      case status
-      when 'processing'
-        return 'completed'
-      when 'complete'
-        return 'completed'
-      when 'pending_payment'
-        return 'pending'
-      when 'payment_review'
-        return 'payment'
-      when 'pending_paypal'
-        return 'pending'
-      end
-      status
+      ORDER_STATUS_MAPPING[status]
     end
 
     def getFullName(order)
       "#{order[:customer_firstname]} #{order[:customer_lastname]}"
     end
-
-    private
 
     def filters(key, value_key, value_value)
       {
@@ -390,7 +384,7 @@ module MagentoIntegration
     #   order.body[:sales_order_info_response][:result]
     # end
 
-    # TODO: Extract this method to a ::Customer class
+    # TODO: Extract this method to a Magento::Customer class
     def get_customer_info_by_email(email)
       customer_list_response = soap_client.call(:customer_customer_list, email: email)
       customer_list = customer_list_response.body[:customer_customer_list_response][:store_view][:item]
@@ -408,26 +402,15 @@ module MagentoIntegration
       customer_list
     end
 
+    # # TODO: extract this method to a ::Shipment class
     def get_shipment_info_by_order_id(order_id)
-      shipment_complex_filter = {
-        key: 'order_id',
-        value: {
-          key: 'eq',
-          value: order_id
-        }
-      }
+      sales_order_shipment_response = soap_client.call(:sales_order_shipment_list,
+                                                       filters: filters('order_id', 'eq', order_id))
 
-      sales_order_shipment_response = soap_client.call :sales_order_shipment_list,
-                                                       filters: {
-                                                         'complex_filter' => [[shipment_complex_filter]]
-                                                       }
-
+      binding.pry
       sales_order_shipment_list = sales_order_shipment_response.body[:sales_order_shipment_list][:result][:item]
-      sales_order_shipment_list = sales_order_shipment_response[]
 
-      return shipments[0] if shipments.is_a?(Array)
-
-      shipments
+      convert_to_array(sales_order_shipment_list)
 
       # magento_shipments = convert_to_array(shipments[:sales_order_shipment_list_response][:result][:item])
       #
