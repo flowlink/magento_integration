@@ -5,23 +5,8 @@ require 'json'
 module MagentoIntegration
   class Order < Base
     def get_orders
-      complex_filter = {}
-      complex_filter['key'] = 'updated_at'
-      complex_filter['value'] = {
-        key: 'from',
-        value: @config[:since]
-      }
-
-      response = soap_client.call :sales_order_list,
-                                  filters: {
-                                    'complex_filter' => [[complex_filter]]
-                                  }
-
       wombat_orders = []
-
-      orders = response.body
-
-      magento_orders = convert_to_array(orders[:sales_order_list_response][:result][:item])
+      magento_orders = get_orders_since(@config[:since])
       magento_orders.each do |order|
         # Get Order Info
         orderResponse = soap_client.call :sales_order_info, order_increment_id: order[:increment_id]
@@ -407,6 +392,26 @@ module MagentoIntegration
 
     def getFullName(order)
       "#{order[:customer_firstname]} #{order[:customer_lastname]}"
+    end
+
+    private
+
+    def get_orders_since(since)
+      complex_filter = {}
+      complex_filter['key'] = 'updated_at'
+      complex_filter['value'] = {
+        key: 'from',
+        value: since
+      }
+
+      response = soap_client.call :sales_order_list,
+                                  filters: {
+                                    'complex_filter' => [[complex_filter]]
+                                  }
+
+      orders = response.body
+
+      magento_orders = convert_to_array(orders[:sales_order_list_response][:result][:item])
     end
   end
 end
