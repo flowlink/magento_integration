@@ -365,26 +365,30 @@ module MagentoIntegration
 
     private
 
+    def filters(key, value_key, value_value)
+      {
+        complex_filter: [[{
+          key: key,
+          value: {
+            key: value_key,
+            value: value_value
+          }
+        }]]
+      }
+    end
+
     def get_orders_since(since)
-      complex_filter = [[{
-        key: 'updated_at',
-        value: {
-          key: 'from',
-          value: since
-        }
-      }]]
-      response = soap_client.call :sales_order_list,
-                                  filters: {
-                                    'complex_filter' => complex_filter
-                                  }
+      response = soap_client.call(:sales_order_list,
+                                  filters: filters('updated_at', 'from', since))
       orders = response.body
+
       convert_to_array(orders[:sales_order_list_response][:result][:item])
     end
 
-    def get_order_info_by_id(id)
-      order = soap_client.call(:sales_order_info, order_increment_id: id)
-      order.body[:sales_order_info_response][:result]
-    end
+    # def get_order_info_by_id(id)
+    #   order = soap_client.call(:sales_order_info, order_increment_id: id)
+    #   order.body[:sales_order_info_response][:result]
+    # end
 
     # TODO: Extract this method to a ::Customer class
     def get_customer_info_by_email(email)
@@ -400,6 +404,7 @@ module MagentoIntegration
       # customer_response.body[:customer_customer_info_response][:customer_info]
 
       return customer_list[0] if customer_list.is_a?(Array)
+
       customer_list
     end
 
@@ -412,15 +417,16 @@ module MagentoIntegration
         }
       }
 
-
       sales_order_shipment_response = soap_client.call :sales_order_shipment_list,
                                                        filters: {
                                                          'complex_filter' => [[shipment_complex_filter]]
                                                        }
 
-      shipments = sales_order_shipment_response.body
+      sales_order_shipment_list = sales_order_shipment_response.body[:sales_order_shipment_list][:result][:item]
+      sales_order_shipment_list = sales_order_shipment_response[]
 
       return shipments[0] if shipments.is_a?(Array)
+
       shipments
 
       # magento_shipments = convert_to_array(shipments[:sales_order_shipment_list_response][:result][:item])
