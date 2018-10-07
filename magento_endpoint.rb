@@ -27,7 +27,8 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
   post '/get_orders' do
     begin
-      orders = MagentoIntegration::Order.new(@config).get_orders
+      order = MagentoIntegration::Order.new(@config)
+      orders = order.get_orders
 
       orders.each { |o| add_object 'order', o }
 
@@ -36,7 +37,7 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
         shipments.each { |s| add_object 'shipment', s }
       end
 
-      line = orders.count.positive ? "Received #{orders.count} #{'order'.pluralize orders.count} from Magento" : 'No new/updated orders found'
+      line = orders.count.positive? ? "Received #{orders.count} #{'order'.pluralize orders.count} from Magento" : 'No new/updated orders found'
 
       add_parameter 'since', Time.now.utc.iso8601
 
