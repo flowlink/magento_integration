@@ -5,31 +5,21 @@ require 'json'
 module MagentoIntegration
   class Order < Base
     def get_orders
-      wombat_orders = []
+      flowlink_orders = []
       magento_orders = get_orders_since(@config[:since])
+      magento_shipments = get_shipments
+
       magento_orders.each do |order|
 
         # Get Customer Info
         customer = get_customer_info_by_customer_id(order[:customer_id])
 
         # Shipment Info
-        shipment = get_shipment_info_by_order_id(order[:order_id])
+        shipment = get_shipment_info_by_order_id(order[:order_id], magento_shipments)
 
+        # TODO: build invoice stuff
         # # Invoice Info
-        # invoices_complex_filter = Hash.new
-        # invoices_complex_filter['key'] = "order_id"
-        # invoices_complex_filter['value'] = {
-        #     :key => "eq",
-        #     :value => order[:order_id]
-        # }
-
-        # invoices_response = soap_client.call :sales_order_invoice_list, {
-        #     :filters => {
-        #         'complex_filter' => [[invoices_complex_filter]]
-        #     }
-        # }
-
-        # invoices = convert_to_array(invoices_response.body[:sales_order_invoice_list_response][:result][:item])
+        #
 
         # TODO: Make REST API call here. We need to:
         # 1. Get the coupon code for discounts.
@@ -84,6 +74,8 @@ module MagentoIntegration
           order: order[:grand_total].to_f
         }
 
+
+
         lineItems = []
 
         order_items = convert_to_array(order[:items][:item])
@@ -123,7 +115,7 @@ module MagentoIntegration
 
         placed_date = Time.parse(order[:created_at])
         upated_date = Time.parse(order[:updated_at])
-        wombat_order = {
+        flownlink_order = {
           placed_on: placed_date.utc.iso8601,
           id: order[:increment_id],
           magento_increment_id: order[:increment_id],
@@ -174,15 +166,15 @@ module MagentoIntegration
         }
 
         if soap_client.config[:connection_name]
-          wombat_order[:channel] = soap_client.config[:connection_name]
-          wombat_order[:source] = soap_client.config[:connection_name]
-          wombat_order[:id] = format('%s-%s', soap_client.config[:connection_name], wombat_order[:id])
+          flownlink_order[:channel] = soap_client.config[:connection_name]
+          flownlink_order[:source] = soap_client.config[:connection_name]
+          flownlink_order[:id] = format('%s-%s', soap_client.config[:connection_name], flownlink_order[:id])
         end
 
-        wombat_orders.push(wombat_order)
+        flowlink_orders.push(flownlink_order)
       end
 
-      wombat_orders
+      flowlink_orders
     end
 
     def get_shipment_objects(orders)
@@ -381,32 +373,23 @@ module MagentoIntegration
       response.body[:customer_customer_info_response][:customer_info]
     end
 
-    # # TODO: extract this method to a ::Shipment class
-    def get_shipment_info_by_order_id(order_id)
-      order_id='100000005'
-      sales_order_shipment_response = soap_client.call(:sales_order_shipment_list,
-                                                       filters: filters('order_id', 'eq', order_id))
 
-      binding.pry
-      sales_order_shipment_list = sales_order_shipment_response.body[:sales_order_shipment_list_response][:result][:item]
-
+    def get_shipments
+      response = soap_client.call(:sales_order_shipment_list)
+      sales_order_shipment_list = response.body[:sales_order_shipment_list_response][:result][:item]
       convert_to_array(sales_order_shipment_list)
+    end
 
-      # magento_shipments = convert_to_array(shipments[:sales_order_shipment_list_response][:result][:item])
-      #
-      #
-      #
-      # puts '*****************************'
-      # puts magento_shipments
-      # # List of shipments does not allow filtering by order id??
-      # # Getting a shipment's info has the order ID, so we need to get ALL shipments and then filter out those without the current order's id on them
-      # magento_shipments.each do |shipment|
-      #   shipment_response = soap_client.call :sales_order_shipment_info, shipment_increment_id: shipment[:increment_id]
-      #   shipment = shipment_response.body[:sales_order_shipment_info_response][:result]
-      #   if shipment[:order_id] != order[:increment_id]
-      #     # Build out shipment object here
-      #   end
-      # end
+    # # TODO: extract this method to a ::Shipment class
+    def get_shipment_info_by_order_id(order_id, shipments_list)
+      shipments_list.each do |shipment|
+        response = soap_client.call( :sales_order_shipment_info, shipment_increment_id: shipment[:increment_id] )
+        shipment = response.body[:sales_order_shipment_info_response][:result]
+        if shipment[:order_id] == order[:increment_id]
+          return shipment
+          # Build out shipment object here
+        end
+      end
     end
   end
 end
