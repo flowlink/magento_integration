@@ -6,6 +6,8 @@ module MagentoIntegration
   class Order < Base
     def get_orders
       flowlink_orders = []
+
+      # magento_orders = get_rest_orders_since(@config[:since])
       magento_orders = get_orders_since(@config[:since])
       magento_shipments = get_shipments
 
@@ -319,6 +321,11 @@ module MagentoIntegration
       response = soap_client.call(:sales_order_list,
                                   filters: filters('updated_at', 'from', since))
       convert_to_array(response.body[:sales_order_list_response][:result][:item])
+    end
+
+    def get_rest_orders_since(since)
+      # TODO: Make filtering work :D
+      response = rest_client.get('orders')
     end
 
     def get_order_info_by_id(increment_id)
