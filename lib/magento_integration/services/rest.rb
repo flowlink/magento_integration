@@ -10,11 +10,7 @@ module MagentoIntegration
       REST_BASE_PATH = '/api/rest/'
 
       def initialize(config = {})
-        # config contains consumer_key, consumer_secret, host, oauth_token,
-        # oauth_token_secret
         @config = config
-
-        # generate oauth v1 access token from config
         @access_token = generate_access_token
       end
 
@@ -29,7 +25,6 @@ module MagentoIntegration
         response = yield
         body     = response.body
 
-        # throw error if not success
         response.error! unless response.is_a? Net::HTTPSuccess
 
         return JSON.parse(body) if response.content_type == 'application/json'
