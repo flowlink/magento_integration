@@ -1,7 +1,5 @@
-require 'savon'
 require 'oauth'
 require 'cgi'
-require 'mechanize'
 
 module MagentoIntegration
   module Services
