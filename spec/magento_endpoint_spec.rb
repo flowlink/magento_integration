@@ -15,22 +15,24 @@ describe MagentoEndpoint do
       {
         request_id: '123456',
         parameters: {
-          store_url: ENV['URL'],
-          api_username: ENV['API_USERNAME'],
-          api_password: ENV['API_PASSWORD'],
-          api_key: ENV['API_KEY'],
+          store_url: 'https://storeurl',
+          api_username: 'nurelm',
+          api_password: 'valid_api_password',
+          api_key: 'valid_api_key',
           since: '2017-06-17:21:15Z',
-          key: ENV['REST_KEY'],
-          secret: ENV['REST_SECRET']
+          key: 'valid_rest_key',
+          secret: 'valid_rest_secret'
         }
       }.to_json
     end
 
     context 'with long since param' do
       it 'retrieves the last magento orders correctly' do
-        post '/get_orders', post_payload
+        VCR.use_cassette("post get_orders", record: :new_episodes) do
+          post '/get_orders', post_payload
 
-        expect(last_response).to be_ok
+          expect(last_response).to be_ok
+        end
       end
     end
   end
