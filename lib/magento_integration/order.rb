@@ -7,8 +7,10 @@ module MagentoIntegration
     def get_orders
       flowlink_orders = []
 
-      # magento_orders = get_rest_orders_since(@config[:since])
+      magento_orders = get_rest_orders_since(@config[:since])
+      binding.pry
       magento_orders = get_orders_since(@config[:since])
+      binding.pry
       magento_shipments = get_shipments
 
       magento_orders.each do |magento_order|
@@ -208,7 +210,7 @@ module MagentoIntegration
 
     private
 
-    ORDER_STATUS_MAPPING = {
+    MAGENTO_TO_FLOWLINK_STATUS_MAPPING = {
       'processing': 'completed',
       'complete': 'completed',
       'pending_payment': 'pending',
@@ -217,7 +219,7 @@ module MagentoIntegration
     }.freeze
 
     def get_order_status(status)
-      ORDER_STATUS_MAPPING[status]
+      MAGENTO_TO_FLOWLINK_STATUS_MAPPING[status]
     end
 
     def item_magento_to_flowlink(item)
