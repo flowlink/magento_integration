@@ -14,15 +14,18 @@ gem 'endpoint_base', github: 'flowlink/endpoint_base'
 gem 'honeybadger'
 gem 'airbrake'
 
+gem 'sinatra-contrib' # For sinatra/reloader which autoreloads modules on change
+
 group :development do
   gem 'rake'
   gem 'shotgun'
 end
 
 group :test do
+  gem 'vcr'
+  gem 'webmock'
   gem 'rspec', '~> 2.14'
   gem 'rack-test'
-  gem 'webmock'
   gem 'simplecov', require: false
 end
 

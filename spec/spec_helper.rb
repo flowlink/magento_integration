@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'simplecov'
 SimpleCov.start
 
@@ -8,21 +10,27 @@ SimpleCov.start
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
-
 # spec/spec_helper.rb
 require 'rack/test'
 require 'rspec'
+require 'vcr'
 
 ENV['RACK_ENV'] = 'test'
 
-require File.expand_path '../../magento_endpoint.rb', __FILE__
+require File.expand_path '../magento_endpoint.rb', __dir__
 
-module RSpecMixin
-  include Rack::Test::Methods
-  def app() described_class end
+VCR.configure do |config|
+  config.cassette_library_dir = "fixtures/vcr_cassettes"
+  config.hook_into :webmock
 end
 
 
+module RSpecMixin
+  include Rack::Test::Methods
+  def app
+    described_class
+  end
+end
 
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true
