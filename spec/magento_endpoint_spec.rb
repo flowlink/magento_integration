@@ -58,6 +58,7 @@ describe MagentoEndpoint do
           expect(first_order).to include('purchased_from')
           expect(first_order).to include('shipping_price')
           expect(first_order).to include('line_items')
+          expect(first_order).to include('coupon_code')
           # expect(first_order).to include('sales_representative')
 
           expect(first_line_item).to include('name')
