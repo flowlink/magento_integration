@@ -13,7 +13,7 @@ module MagentoIntegration
 
       magento_orders.each do |magento_order|
         # Get order details
-        order = get_order_info_by_id(magento_order[:increment_id])
+        order = magento_order # get_order_info_by_id(magento_order[:increment_id])
 
         # Get Customer Info
         customer = get_customer_info_by_customer_id(order[:customer_id])
@@ -65,7 +65,7 @@ module MagentoIntegration
           shipping_method: order[:shipping_method],
           store_to_order_rate: order[:store_to_order_rate],
           purchased_from: order[:purchased_from],
-          status: get_order_status(order[:status]),
+          status: order[:status],
           customer_firstname: order[:customer_firstname],
           customer_lastname: order[:customer_lastname],
           customer_name: getFullName(order),
@@ -212,18 +212,6 @@ module MagentoIntegration
     end
 
     private
-
-    MAGENTO_TO_FLOWLINK_STATUS_MAPPING = {
-      'processing': 'completed',
-      'complete': 'completed',
-      'pending_payment': 'pending',
-      'payment_review': 'payment',
-      'pending_paypal': 'pending'
-    }.freeze
-
-    def get_order_status(status)
-      MAGENTO_TO_FLOWLINK_STATUS_MAPPING[status]
-    end
 
     def item_magento_to_flowlink(item)
       {
