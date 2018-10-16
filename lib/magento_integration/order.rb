@@ -7,10 +7,8 @@ module MagentoIntegration
     def get_orders
       flowlink_orders = []
 
-      magento_orders = get_rest_orders_since(@config[:since])
-      binding.pry
+      # magento_orders = get_rest_orders_since(@config[:since])
       magento_orders = get_orders_since(@config[:since])
-      binding.pry
       magento_shipments = get_shipments
 
       magento_orders.each do |magento_order|
@@ -55,18 +53,23 @@ module MagentoIntegration
         # puts order[:increment_id]
         # puts order.to_json
 
-        placed_date = Time.parse(order[:created_at])
+        placed_date = Time.parse(order[:created_at]).utc.iso8601
         upated_date = Time.parse(order[:updated_at])
         flownlink_order = {
-          placed_on: placed_date.utc.iso8601,
+          created_at: placed_date,
+          placed_on: placed_date,
+          order_id: order[:order_id],
+          order_currency_code: order[:order_currency_code],
           id: order[:increment_id],
           magento_increment_id: order[:increment_id],
+          shipping_method: order[:shipping_method],
+          store_to_order_rate: order[:store_to_order_rate],
+          purchased_from: order[:purchased_from],
           status: get_order_status(order[:status]),
           customer_firstname: order[:customer_firstname],
           customer_lastname: order[:customer_lastname],
           customer_name: getFullName(order),
           currency: order[:order_currency_code],
-          shipping_method: order[:shipping_method],
           exchange_rate: order[:store_to_order_rate],
           comments: comments(order),
           billing_address: address_magento_to_flowlink(order[:billing_address]),
@@ -228,6 +231,7 @@ module MagentoIntegration
         sku: item[:sku],
         name: item[:name],
         quantity: item[:qty_ordered].to_f,
+        qty_ordered: item[:qty_ordered].to_f,
         price: item[:price].to_f,
         product_type: item[:product_type],
         weight: item[:weight],
