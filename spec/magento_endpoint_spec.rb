@@ -15,13 +15,15 @@ describe MagentoEndpoint do
       {
         request_id: '123456',
         parameters: {
-          store_url: 'https://storeurl',
-          api_username: 'nurelm',
-          api_password: 'valid_api_password',
+          store_url: 'https://magentourl.store.com',
+          api_username: 'valid_api_username',
+          api_password: 'valid_api_pass',
           api_key: 'valid_api_key',
           since: '2017-06-17:21:15Z',
           key: 'valid_rest_key',
-          secret: 'valid_rest_secret'
+          secret: 'valid_rest_secret',
+          oauth_token: 'valid_oauth_token',
+          oauth_token_secret: 'valid_oauth_token_secret'
         }
       }.to_json
     end

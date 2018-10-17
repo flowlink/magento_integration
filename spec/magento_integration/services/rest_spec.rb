@@ -9,7 +9,7 @@ describe MagentoIntegration::Services::Rest do
     {
       key: 'valid_rest_key',
       secret: 'valid_rest_secret',
-      store_url: 'https://storeurl',
+      store_url: 'https://magentourl.store.com',
       oauth_token: 'valid_oauth_token',
       oauth_token_secret: 'valid_oauth_token_secret'
     }
