@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
 require 'json'
+require_relative '../utils/hash_tools.rb'
 
 module MagentoIntegration
   class Order < Base
+
+    KEYS_LIST_FROM_REST = [:coupon_code]
+
     def get_orders
       flowlink_orders = []
 
@@ -13,7 +17,8 @@ module MagentoIntegration
 
       magento_orders.each do |magento_order|
         # Get order details
-        order = magento_order # get_order_info_by_id(magento_order[:increment_id])
+        soap_order_details = get_order_info_by_id(magento_order[:increment_id])
+        order = merge_rest_order_details(soap_order_details)
 
         # Get Customer Info
         customer = get_customer_info_by_customer_id(order[:customer_id])
@@ -80,6 +85,7 @@ module MagentoIntegration
           email: order[:customer_email],
           discount: order[:discount_amount],
           totals: order_total(order),
+          coupon_code: order[:coupon_code],
           # :payments => payments,
           line_items: order_items(order),
           adjustments: adjustments(order),
@@ -326,6 +332,13 @@ module MagentoIntegration
       response = soap_client.call(:sales_order_info,
                                   order_increment_id: increment_id)
       response.body[:sales_order_info_response][:result]
+    end
+
+    def merge_rest_order_details(magento_soap_order)
+      order_id = magento_soap_order[:order_id]
+      order_rest_details = rest_client.get("orders/#{order_id}")
+      order_rest_details = HashTools.convert_keys_to_symbols(order_rest_details)
+      magento_soap_order.merge(order_rest_details.select{ |key, value| KEYS_LIST_FROM_REST.include?(key) })
     end
 
     # TODO: Extract this method to a Magento::Customer class
