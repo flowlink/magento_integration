@@ -1,23 +1,30 @@
+# frozen_string_literal: true
+
 module MagentoIntegration
   class Base
-    attr_reader :soapClient
 
-    def initialize(client)
-      
-      #@soapClient = MagentoIntegration::Services::Base.new(config);
-      @soapClient = client;
+    def initialize(config)
+      @config = config
     end
 
+    # TODO: remove this method from this class, it does not belong here.
     def convert_to_array(object)
-      result = Array.new
+      return object if object.is_a?(Array)
+      return [object] if object.present?
 
-      if object.kind_of?(Array)
-        result = object
-      elsif !object.nil?
-        result.push(object)
-      end
+      []
+    end
 
-      return result
+    private
+
+    ## TODO: just allow to soap related configs to go through
+    def soap_client
+      @soap_client ||= MagentoIntegration::Services::Soap.new(@config)
+    end
+
+    # TODO: : just allow to rest related configs to go through
+    def rest_client
+      @rest_client ||= MagentoIntegration::Services::Rest.new(@config)
     end
   end
 end

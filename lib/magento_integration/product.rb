@@ -5,7 +5,7 @@ require 'base64'
 
 module MagentoIntegration
   class Product < Base
-    
+
   def add_product(payload, update)
     attribute_set = get_attribute_set
     website = get_store
@@ -39,7 +39,7 @@ module MagentoIntegration
         'single_data' => [attributes]
       }
     end
-    
+
     total = 0
 
     if payload[:product][:variants]
@@ -73,7 +73,7 @@ module MagentoIntegration
         }
 
         if !update
-          result = @soapClient.call :catalog_product_create, {
+          result = soap_client.call :catalog_product_create, {
             :type => 'simple',
             :set => attribute_set[:set_id],
             :sku => variant[:sku],
@@ -82,10 +82,10 @@ module MagentoIntegration
           if result.body[:catalog_product_create_response][:result]
             total += 1
           end
-        
+
           add_images(variant[:sku], variant[:images].count > 0 ? variant[:images] : payload[:product][:images])
         else
-          result = @soapClient.call :catalog_product_update, {
+          result = soap_client.call :catalog_product_update, {
               :type => 'simple',
               :product => variant[:sku],
               :product_data => variant_product
@@ -113,7 +113,7 @@ module MagentoIntegration
 
       if update
         begin
-          result = @soapClient.call :catalog_product_update, {
+          result = soap_client.call :catalog_product_update, {
               :type => 'simple',
               :product => payload[:product][:id], #product_id will be sku
               :product_data => wombat_product
@@ -131,7 +131,7 @@ module MagentoIntegration
       end
 
       if add_new
-        result = @soapClient.call :catalog_product_create, {
+        result = soap_client.call :catalog_product_create, {
             :type => 'simple',
             :set => attribute_set[:set_id],
             :sku => payload[:product][:id], #product_id will be sku
@@ -153,8 +153,8 @@ module MagentoIntegration
 		    :qty => payload[:inventory][:quantity]
 		  }
 	  }
-	  
-	  result = @soapClient.call :catalog_product_update, {
+
+	  result = soap_client.call :catalog_product_update, {
       :type => 'simple',
       :product => payload[:inventory][:sku],
       :product_data => product
@@ -162,11 +162,11 @@ module MagentoIntegration
 
 	  return result.body[:catalog_product_update_response][:result]
 	end
-	
+
     private
 
     def get_attribute_set
-      response = @soapClient.call :catalog_product_attribute_set_list
+      response = soap_client.call :catalog_product_attribute_set_list
 
       attribute_sets = response.body[:catalog_product_attribute_set_list_response][:result][:item]
 
@@ -178,7 +178,7 @@ module MagentoIntegration
     end
 
     def get_store
-      response = @soapClient.call :store_list
+      response = soap_client.call :store_list
 
       stores = response.body[:store_list_response][:stores][:item]
 
@@ -188,20 +188,20 @@ module MagentoIntegration
         return stores
       end
     end
-    
+
     def add_images(product_sku, images)
       if images.count == 0
         return
       end
-    
+
       data = Array.new
       files = Array.new
-      
+
       i = 0
       images.each do |image|
         data_str = open(image[:url])
         image_base64 = Base64.encode64(data_str.read)
-        
+
         image_data = {
           :file => {
             :content => image_base64,
@@ -213,12 +213,12 @@ module MagentoIntegration
           :types => (i == 0) ? ['image','small_image','thumbnail'] : [],
           :exclude => 0
         }
-        
-        result = @soapClient.call :catalog_product_attribute_media_create, {
+
+        result = soap_client.call :catalog_product_attribute_media_create, {
           :product => product_sku,
           :data => [image_data]
         }
-        
+
         puts result.body
         i += 1
       end

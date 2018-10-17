@@ -1,0 +1,90 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://magentourl.store.com/api/rest/orders
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - OAuth gem v0.5.4
+      Authorization:
+      - OAuth oauth_consumer_key="valid_rest_key", oauth_nonce="gnJf6vfeLD1MMJ7JHJpwdtTiB3dO0TW8is2GAyubo",
+        oauth_signature="Lvk%2FvsTls2KJM0taqk7qvJFGMz0%3D", oauth_signature_method="HMAC-SHA1",
+        oauth_timestamp="1539737306", oauth_token="valid_oauth_token",
+        oauth_version="1.0"
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Wed, 17 Oct 2018 00:48:27 GMT
+      Server:
+      - Apache
+      X-Content-Type-Options:
+      - nosniff
+      X-Xss-Protection:
+      - 1; mode=block
+      Transfer-Encoding:
+      - chunked
+      Content-Type:
+      - application/json; charset=utf-8
+    body:
+      encoding: UTF-8
+      string: '{"1":{"entity_id":"1","status":"processing","coupon_code":null,"shipping_description":"Flat
+        Rate - Fixed","customer_id":"1","base_discount_amount":"0.0000","base_grand_total":"2010.0000","base_shipping_amount":"10.0000","base_shipping_tax_amount":"0.0000","base_subtotal":"2000.0000","base_tax_amount":"0.0000","base_total_paid":null,"base_total_refunded":null,"discount_amount":"0.0000","grand_total":"2010.0000","shipping_amount":"10.0000","shipping_tax_amount":"0.0000","store_to_order_rate":"1.0000","subtotal":"2000.0000","tax_amount":"0.0000","total_paid":null,"total_refunded":null,"base_shipping_discount_amount":"0.0000","base_subtotal_incl_tax":"2000.0000","base_total_due":"2010.0000","shipping_discount_amount":"0.0000","subtotal_incl_tax":"2000.0000","total_due":"2010.0000","increment_id":"100000001","base_currency_code":"USD","discount_description":null,"remote_ip":null,"store_currency_code":"USD","store_name":"Main
+        Website\nMain Website Store\nDefault Store View","created_at":"2018-02-12
+        20:56:03","shipping_incl_tax":"10.0000","payment_method":"checkmo","gift_message_from":null,"gift_message_to":null,"gift_message_body":null,"tax_name":null,"tax_rate":null,"addresses":[{"region":"Pennsylvania","postcode":"15206","lastname":"Salo","street":"6504
+        Jackson St.","city":"Pittsburgh","email":null,"telephone":"4123375535","country_id":"US","firstname":"Marc","address_type":"billing","prefix":null,"middlename":null,"suffix":null,"company":null},{"region":"Pennsylvania","postcode":"15206","lastname":"Salo","street":"6504
+        Jackson St.","city":"Pittsburgh","email":null,"telephone":"4123375535","country_id":"US","firstname":"Marc","address_type":"shipping","prefix":null,"middlename":null,"suffix":null,"company":null}],"order_items":[{"item_id":"1","parent_item_id":null,"sku":"1","name":"Test
+        Product","qty_canceled":"0.0000","qty_invoiced":"0.0000","qty_ordered":"2.0000","qty_refunded":"0.0000","qty_shipped":"2.0000","price":"1000.0000","base_price":"1000.0000","original_price":"1000.0000","base_original_price":"1000.0000","tax_percent":"0.0000","tax_amount":"0.0000","base_tax_amount":"0.0000","discount_amount":"0.0000","base_discount_amount":"0.0000","row_total":"2000.0000","base_row_total":"2000.0000","price_incl_tax":"1000.0000","base_price_incl_tax":"1000.0000","row_total_incl_tax":"2000.0000","base_row_total_incl_tax":"2000.0000"}],"order_comments":[{"is_customer_notified":"0","is_visible_on_front":"0","comment":null,"status":"pending","created_at":"2018-02-12
+        20:56:03"},{"is_customer_notified":"0","is_visible_on_front":"0","comment":null,"status":"processing","created_at":"2018-02-12
+        21:30:49"}]},"2":{"entity_id":"2","status":"processing","coupon_code":null,"shipping_description":"Flat
+        Rate - Fixed","customer_id":"1","base_discount_amount":"0.0000","base_grand_total":"1005.0000","base_shipping_amount":"5.0000","base_shipping_tax_amount":"0.0000","base_subtotal":"1000.0000","base_tax_amount":"0.0000","base_total_paid":null,"base_total_refunded":null,"discount_amount":"0.0000","grand_total":"1005.0000","shipping_amount":"5.0000","shipping_tax_amount":"0.0000","store_to_order_rate":"1.0000","subtotal":"1000.0000","tax_amount":"0.0000","total_paid":null,"total_refunded":null,"base_shipping_discount_amount":"0.0000","base_subtotal_incl_tax":"1000.0000","base_total_due":"1005.0000","shipping_discount_amount":"0.0000","subtotal_incl_tax":"1000.0000","total_due":"1005.0000","increment_id":"100000002","base_currency_code":"USD","discount_description":null,"remote_ip":null,"store_currency_code":"USD","store_name":"Main
+        Website\nMain Website Store\nDefault Store View","created_at":"2018-02-12
+        21:36:51","shipping_incl_tax":"5.0000","payment_method":"checkmo","gift_message_from":null,"gift_message_to":null,"gift_message_body":null,"tax_name":null,"tax_rate":null,"addresses":[{"region":"Pennsylvania","postcode":"15206","lastname":"Salo","street":"6504
+        Jackson St.","city":"Pittsburgh","email":null,"telephone":"4123375535","country_id":"US","firstname":"Marc","address_type":"billing","prefix":null,"middlename":null,"suffix":null,"company":null},{"region":"Pennsylvania","postcode":"15206","lastname":"Salo","street":"6504
+        Jackson St.","city":"Pittsburgh","email":null,"telephone":"4123375535","country_id":"US","firstname":"Marc","address_type":"shipping","prefix":null,"middlename":null,"suffix":null,"company":null}],"order_items":[{"item_id":"2","parent_item_id":null,"sku":"1","name":"Test
+        Product","qty_canceled":"0.0000","qty_invoiced":"0.0000","qty_ordered":"1.0000","qty_refunded":"0.0000","qty_shipped":"1.0000","price":"1000.0000","base_price":"1000.0000","original_price":"1000.0000","base_original_price":"1000.0000","tax_percent":"0.0000","tax_amount":"0.0000","base_tax_amount":"0.0000","discount_amount":"0.0000","base_discount_amount":"0.0000","row_total":"1000.0000","base_row_total":"1000.0000","price_incl_tax":"1000.0000","base_price_incl_tax":"1000.0000","row_total_incl_tax":"1000.0000","base_row_total_incl_tax":"1000.0000"}],"order_comments":[{"is_customer_notified":"0","is_visible_on_front":"0","comment":null,"status":"pending","created_at":"2018-02-12
+        21:36:51"},{"is_customer_notified":"0","is_visible_on_front":"0","comment":null,"status":"processing","created_at":"2018-02-12
+        21:37:12"}]},"3":{"entity_id":"3","status":"processing","coupon_code":null,"shipping_description":"Flat
+        Rate - Fixed","customer_id":"1","base_discount_amount":"0.0000","base_grand_total":"1005.0000","base_shipping_amount":"5.0000","base_shipping_tax_amount":"0.0000","base_subtotal":"1000.0000","base_tax_amount":"0.0000","base_total_paid":null,"base_total_refunded":null,"discount_amount":"0.0000","grand_total":"1005.0000","shipping_amount":"5.0000","shipping_tax_amount":"0.0000","store_to_order_rate":"1.0000","subtotal":"1000.0000","tax_amount":"0.0000","total_paid":null,"total_refunded":null,"base_shipping_discount_amount":"0.0000","base_subtotal_incl_tax":"1000.0000","base_total_due":"1005.0000","shipping_discount_amount":"0.0000","subtotal_incl_tax":"1000.0000","total_due":"1005.0000","increment_id":"100000003","base_currency_code":"USD","discount_description":null,"remote_ip":null,"store_currency_code":"USD","store_name":"Main
+        Website\nMain Website Store\nDefault Store View","created_at":"2018-02-12
+        21:40:27","shipping_incl_tax":"5.0000","payment_method":"checkmo","gift_message_from":null,"gift_message_to":null,"gift_message_body":null,"tax_name":null,"tax_rate":null,"addresses":[{"region":"Pennsylvania","postcode":"15206","lastname":"Salo","street":"6504
+        Jackson St.","city":"Pittsburgh","email":null,"telephone":"4123375535","country_id":"US","firstname":"Marc","address_type":"billing","prefix":null,"middlename":null,"suffix":null,"company":null},{"region":"Pennsylvania","postcode":"15206","lastname":"Salo","street":"6504
+        Jackson St.","city":"Pittsburgh","email":null,"telephone":"4123375535","country_id":"US","firstname":"Marc","address_type":"shipping","prefix":null,"middlename":null,"suffix":null,"company":null}],"order_items":[{"item_id":"3","parent_item_id":null,"sku":"1","name":"Test
+        Product","qty_canceled":"0.0000","qty_invoiced":"0.0000","qty_ordered":"1.0000","qty_refunded":"0.0000","qty_shipped":"1.0000","price":"1000.0000","base_price":"1000.0000","original_price":"1000.0000","base_original_price":"1000.0000","tax_percent":"0.0000","tax_amount":"0.0000","base_tax_amount":"0.0000","discount_amount":"0.0000","base_discount_amount":"0.0000","row_total":"1000.0000","base_row_total":"1000.0000","price_incl_tax":"1000.0000","base_price_incl_tax":"1000.0000","row_total_incl_tax":"1000.0000","base_row_total_incl_tax":"1000.0000"}],"order_comments":[{"is_customer_notified":"0","is_visible_on_front":"0","comment":null,"status":"pending","created_at":"2018-02-12
+        21:40:27"},{"is_customer_notified":"0","is_visible_on_front":"0","comment":null,"status":"processing","created_at":"2018-02-12
+        21:40:47"}]},"4":{"entity_id":"4","status":"processing","coupon_code":null,"shipping_description":"Flat
+        Rate - Fixed","customer_id":"1","base_discount_amount":"0.0000","base_grand_total":"1005.0000","base_shipping_amount":"5.0000","base_shipping_tax_amount":"0.0000","base_subtotal":"1000.0000","base_tax_amount":"0.0000","base_total_paid":null,"base_total_refunded":null,"discount_amount":"0.0000","grand_total":"1005.0000","shipping_amount":"5.0000","shipping_tax_amount":"0.0000","store_to_order_rate":"1.0000","subtotal":"1000.0000","tax_amount":"0.0000","total_paid":null,"total_refunded":null,"base_shipping_discount_amount":"0.0000","base_subtotal_incl_tax":"1000.0000","base_total_due":"1005.0000","shipping_discount_amount":"0.0000","subtotal_incl_tax":"1000.0000","total_due":"1005.0000","increment_id":"100000004","base_currency_code":"USD","discount_description":null,"remote_ip":null,"store_currency_code":"USD","store_name":"Main
+        Website\nMain Website Store\nDefault Store View","created_at":"2018-02-12
+        21:41:38","shipping_incl_tax":"5.0000","payment_method":"checkmo","gift_message_from":null,"gift_message_to":null,"gift_message_body":null,"tax_name":null,"tax_rate":null,"addresses":[{"region":"Pennsylvania","postcode":"15206","lastname":"Salo","street":"6504
+        Jackson St.","city":"Pittsburgh","email":null,"telephone":"4123375535","country_id":"US","firstname":"Marc","address_type":"billing","prefix":null,"middlename":null,"suffix":null,"company":null},{"region":"Pennsylvania","postcode":"15206","lastname":"Salo","street":"6504
+        Jackson St.","city":"Pittsburgh","email":null,"telephone":"4123375535","country_id":"US","firstname":"Marc","address_type":"shipping","prefix":null,"middlename":null,"suffix":null,"company":null}],"order_items":[{"item_id":"4","parent_item_id":null,"sku":"1","name":"Test
+        Product","qty_canceled":"0.0000","qty_invoiced":"0.0000","qty_ordered":"1.0000","qty_refunded":"0.0000","qty_shipped":"1.0000","price":"1000.0000","base_price":"1000.0000","original_price":"1000.0000","base_original_price":"1000.0000","tax_percent":"0.0000","tax_amount":"0.0000","base_tax_amount":"0.0000","discount_amount":"0.0000","base_discount_amount":"0.0000","row_total":"1000.0000","base_row_total":"1000.0000","price_incl_tax":"1000.0000","base_price_incl_tax":"1000.0000","row_total_incl_tax":"1000.0000","base_row_total_incl_tax":"1000.0000"}],"order_comments":[{"is_customer_notified":"0","is_visible_on_front":"0","comment":null,"status":"pending","created_at":"2018-02-12
+        21:41:38"},{"is_customer_notified":"0","is_visible_on_front":"0","comment":null,"status":"processing","created_at":"2018-02-12
+        21:41:47"}]},"5":{"entity_id":"5","status":"processing","coupon_code":null,"shipping_description":"Flat
+        Rate - Fixed","customer_id":"1","base_discount_amount":"0.0000","base_grand_total":"1005.0000","base_shipping_amount":"5.0000","base_shipping_tax_amount":"0.0000","base_subtotal":"1000.0000","base_tax_amount":"0.0000","base_total_paid":null,"base_total_refunded":null,"discount_amount":"0.0000","grand_total":"1005.0000","shipping_amount":"5.0000","shipping_tax_amount":"0.0000","store_to_order_rate":"1.0000","subtotal":"1000.0000","tax_amount":"0.0000","total_paid":null,"total_refunded":null,"base_shipping_discount_amount":"0.0000","base_subtotal_incl_tax":"1000.0000","base_total_due":"1005.0000","shipping_discount_amount":"0.0000","subtotal_incl_tax":"1000.0000","total_due":"1005.0000","increment_id":"100000005","base_currency_code":"USD","discount_description":null,"remote_ip":null,"store_currency_code":"USD","store_name":"Main
+        Website\nMain Website Store\nDefault Store View","created_at":"2018-02-12
+        21:43:20","shipping_incl_tax":"5.0000","payment_method":"checkmo","gift_message_from":null,"gift_message_to":null,"gift_message_body":null,"tax_name":null,"tax_rate":null,"addresses":[{"region":"Pennsylvania","postcode":"15206","lastname":"Salo","street":"6504
+        Jackson St.","city":"Pittsburgh","email":null,"telephone":"4123375535","country_id":"US","firstname":"Marc","address_type":"billing","prefix":null,"middlename":null,"suffix":null,"company":null},{"region":"Pennsylvania","postcode":"15206","lastname":"Salo","street":"6504
+        Jackson St.","city":"Pittsburgh","email":null,"telephone":"4123375535","country_id":"US","firstname":"Marc","address_type":"shipping","prefix":null,"middlename":null,"suffix":null,"company":null}],"order_items":[{"item_id":"5","parent_item_id":null,"sku":"1","name":"Test
+        Product","qty_canceled":"0.0000","qty_invoiced":"0.0000","qty_ordered":"1.0000","qty_refunded":"0.0000","qty_shipped":"1.0000","price":"1000.0000","base_price":"1000.0000","original_price":"1000.0000","base_original_price":"1000.0000","tax_percent":"0.0000","tax_amount":"0.0000","base_tax_amount":"0.0000","discount_amount":"0.0000","base_discount_amount":"0.0000","row_total":"1000.0000","base_row_total":"1000.0000","price_incl_tax":"1000.0000","base_price_incl_tax":"1000.0000","row_total_incl_tax":"1000.0000","base_row_total_incl_tax":"1000.0000"}],"order_comments":[{"is_customer_notified":"0","is_visible_on_front":"0","comment":null,"status":"pending","created_at":"2018-02-12
+        21:43:20"},{"is_customer_notified":"0","is_visible_on_front":"0","comment":null,"status":"processing","created_at":"2018-02-12
+        21:43:44"}]},"6":{"entity_id":"6","status":"pending","coupon_code":null,"shipping_description":"Flat
+        Rate - Fixed","customer_id":"1","base_discount_amount":"0.0000","base_grand_total":"7030.0000","base_shipping_amount":"30.0000","base_shipping_tax_amount":"0.0000","base_subtotal":"7000.0000","base_tax_amount":"0.0000","base_total_paid":null,"base_total_refunded":null,"discount_amount":"0.0000","grand_total":"7030.0000","shipping_amount":"30.0000","shipping_tax_amount":"0.0000","store_to_order_rate":"1.0000","subtotal":"7000.0000","tax_amount":"0.0000","total_paid":null,"total_refunded":null,"base_shipping_discount_amount":"0.0000","base_subtotal_incl_tax":"7000.0000","base_total_due":null,"shipping_discount_amount":"0.0000","subtotal_incl_tax":"7000.0000","total_due":null,"increment_id":"100000006","base_currency_code":"USD","discount_description":null,"remote_ip":null,"store_currency_code":"USD","store_name":"Main
+        Website\nMain Website Store\nDefault Store View","created_at":"2018-06-29
+        15:09:49","shipping_incl_tax":"30.0000","payment_method":"checkmo","gift_message_from":null,"gift_message_to":null,"gift_message_body":null,"tax_name":null,"tax_rate":null,"addresses":[{"region":"Pennsylvania","postcode":"15206","lastname":"Salo","street":"6504
+        Jackson St.","city":"Pittsburgh","email":null,"telephone":"4123375535","country_id":"US","firstname":"Marc","address_type":"billing","prefix":null,"middlename":null,"suffix":null,"company":null},{"region":"Pennsylvania","postcode":"15206","lastname":"Salo","street":"6504
+        Jackson St.","city":"Pittsburgh","email":null,"telephone":"4123375535","country_id":"US","firstname":"Marc","address_type":"shipping","prefix":null,"middlename":null,"suffix":null,"company":null}],"order_items":[{"item_id":"6","parent_item_id":null,"sku":"1","name":"Test
+        Product","qty_canceled":"0.0000","qty_invoiced":"0.0000","qty_ordered":"5.0000","qty_refunded":"0.0000","qty_shipped":"0.0000","price":"1000.0000","base_price":"1000.0000","original_price":"1000.0000","base_original_price":"1000.0000","tax_percent":"0.0000","tax_amount":"0.0000","base_tax_amount":"0.0000","discount_amount":"0.0000","base_discount_amount":"0.0000","row_total":"5000.0000","base_row_total":"5000.0000","price_incl_tax":"1000.0000","base_price_incl_tax":"1000.0000","row_total_incl_tax":"5000.0000","base_row_total_incl_tax":"5000.0000"},{"item_id":"7","parent_item_id":null,"sku":"eng-001","name":"Engine","qty_canceled":"0.0000","qty_invoiced":"0.0000","qty_ordered":"1.0000","qty_refunded":"0.0000","qty_shipped":"0.0000","price":"2000.0000","base_price":"2000.0000","original_price":"2000.0000","base_original_price":"2000.0000","tax_percent":"0.0000","tax_amount":"0.0000","base_tax_amount":"0.0000","discount_amount":"0.0000","base_discount_amount":"0.0000","row_total":"2000.0000","base_row_total":"2000.0000","price_incl_tax":"2000.0000","base_price_incl_tax":"2000.0000","row_total_incl_tax":"2000.0000","base_row_total_incl_tax":"2000.0000"}],"order_comments":[{"is_customer_notified":"0","is_visible_on_front":"0","comment":null,"status":"pending","created_at":"2018-06-29
+        15:09:50"}]}}'
+    http_version: 
+  recorded_at: Wed, 17 Oct 2018 00:48:27 GMT
+recorded_with: VCR 4.0.0
