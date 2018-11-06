@@ -21,10 +21,6 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
   before do
   end
 
-  get '/' do
-    'yay'
-  end
-
   post '/get_orders' do
     begin
       order = MagentoIntegration::Order.new(@config)
