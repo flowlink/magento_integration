@@ -4,12 +4,21 @@ require 'sinatra'
 require 'endpoint_base'
 require 'json'
 require 'honeybadger'
+require 'sinatra/reloader'
 
 require File.expand_path(File.dirname(__FILE__) + '/lib/magento_integration')
 
 class MagentoEndpoint < EndpointBase::Sinatra::Base
   # endpoint_key ENV["ENDPOINT_KEY"]
   attr_reader :client
+
+  # Force Sinatra to autoreload this file or any file in the lib directory
+  # when they change in development
+  configure :development do
+    register Sinatra::Reloader
+    also_reload './lib/**/*'
+    # copy stuff above over from another integration
+  end
 
   Honeybadger.configure do |config|
   end
@@ -28,14 +37,14 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
       orders.each { |o| add_object 'order', o }
 
-      if @config[:create_shipment].to_i == 1
-        shipments = order.get_shipment_objects(orders)
-        shipments.each { |s| add_object 'shipment', s }
-      end
+      # if @config[:create_shipment].to_i == 1
+      #   shipments = order.get_shipment_objects(orders)
+      #   shipments.each { |s| add_object 'shipment', s }
+      # end
 
       line = orders.count.positive? ? "Received #{orders.count} #{'order'.pluralize orders.count} from Magento" : 'No new/updated orders found'
 
-      add_parameter 'since', Time.now.utc.iso8601
+      add_parameter 'since', (orders.count == 50 ? orders.last.updated_at : Time.now.utc.iso8601)
 
       result 200, line
     rescue StandardError => e
