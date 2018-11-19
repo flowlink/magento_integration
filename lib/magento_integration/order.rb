@@ -16,10 +16,9 @@ module MagentoIntegration
 
       magento_orders.first(50).each do |magento_order|
         # Get order details
-        soap_order_details = get_order_info_by_id(magento_order[:increment_id])
-        order = merge_rest_order_details(soap_order_details)
+        # soap_order_details = get_order_info_by_id(magento_order[:increment_id])
+        order = magento_order # merge_rest_order_details(soap_order_details)
 
-        puts order
 
         # Get Customer Info
         # customer = get_customer_info_by_customer_id(order[:customer_id])
@@ -29,21 +28,6 @@ module MagentoIntegration
 
         invoices = get_invoice_info_by_order_id(magento_order[:order_id])
 
-        # TODO: build invoice stuff
-        # # Invoice Info
-        #
-
-        # Manipulate customer data / make other calls for the customer
-        # customer_address_list_response = soap_client.call :customer_address_list, { :customer_id => customer_id }
-        # customer_address_list = customer_address_list_response.body[:customer_address_list_response][:result][:item]
-        # customer_address_list.each do |c|
-        #   customer_address_response = soap_client.call :customer_address_info, { :address_id => c[:customer_address_id] }
-        # end
-
-        # customer_address_response = soap_client.call :customer_address_info, { :address_id => order[:billing_address][:address_id] }
-
-        # customer_address_response = soap_client.call :customer_address_info, { :address_id => order[:shipping_address][:address_id] }
-
         # TODO: Need to build 2 separate objects here:
         # - Invoice Array
         # - Payments Array
@@ -51,10 +35,6 @@ module MagentoIntegration
 
         # order_payments = convert_to_array(order[:payment])
         # payment_method = (order_payments && order_payments.count) ? order_payments[0][:method] : 'no method'
-
-        # puts 'xzxxzxzxzxzxzxzxzxxzxzxzxzzxzxz'
-        # puts order[:increment_id]
-        # puts order.to_json
 
         placed_date = Time.parse(order[:created_at]).utc.iso8601
         upated_date = Time.parse(order[:updated_at])
@@ -293,13 +273,6 @@ module MagentoIntegration
       response = soap_client.call(:sales_order_info,
                                   order_increment_id: increment_id)
       response.body[:sales_order_info_response][:result]
-    end
-
-    def merge_rest_order_details(magento_soap_order)
-      order_id = magento_soap_order[:order_id]
-      order_rest_details = rest_client.get("orders/#{order_id}")
-      order_rest_details = HashTools.convert_keys_to_symbols(order_rest_details)
-      magento_soap_order.merge(order_rest_details.select { |key, _value| KEYS_LIST_FROM_REST.include?(key) })
     end
 
     # TODO: Extract this method to a Magento::Customer class
