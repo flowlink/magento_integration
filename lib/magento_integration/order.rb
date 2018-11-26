@@ -16,9 +16,12 @@ module MagentoIntegration
 
       magento_orders.first(50).each do |magento_order|
         # Get order details
-        # soap_order_details = get_order_info_by_id(magento_order[:increment_id])
-        order = magento_order # merge_rest_order_details(soap_order_details)
-
+        order = magento_order
+        # If order has status history, it means it is using flowlink
+        # magento extension.
+        order = magento_order.merge(
+          get_order_info_by_id(magento_order[:increment_id])
+        ) unless magento_order[:status_history]
 
         # Get Customer Info
         # customer = get_customer_info_by_customer_id(order[:customer_id])
