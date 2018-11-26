@@ -18,14 +18,18 @@ module MagentoIntegration
         url = REST_BASE_PATH + resource_url
         url += '?' + params.to_param if params.any?
 
+        puts url
+        puts options
+
         response_handler { @access_token.get(url, options) }
       end
 
       def response_handler
         response = yield
+        puts @access_token.inspect
         body     = response.body
 
-        response.error! unless response.is_a? Net::HTTPSuccess
+        return {} unless response.is_a? Net::HTTPSuccess
 
         return JSON.parse(body) if response.content_type == 'application/json'
         return body.to_hash if body.respond_to?(:to_hash)

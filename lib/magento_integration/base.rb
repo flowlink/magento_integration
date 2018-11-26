@@ -15,12 +15,13 @@ module MagentoIntegration
       []
     end
 
-    private
 
     ## TODO: just allow to soap related configs to go through
     def soap_client
       @soap_client ||= MagentoIntegration::Services::Soap.new(@config)
     end
+    
+    private
 
     # TODO: : just allow to rest related configs to go through
     def rest_client

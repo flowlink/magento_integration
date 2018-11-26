@@ -32,7 +32,7 @@ module MagentoIntegration
       private
 
       def client
-        @client ||= Savon.client(wsdl: "#{@config[:store_url]}/index.php/api/v2_soap?wsdl", log: false)
+        @client ||= Savon.client(wsdl: "#{@config[:store_url]}/index.php/api/v2_soap?wsdl", log: true, ssl_verify_mode: :none, follow_redirects: true)
       end
     end
   end
