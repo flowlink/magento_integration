@@ -57,7 +57,7 @@ module MagentoIntegration
           customer_name: "#{order[:customer_firstname]} #{order[:customer_lastname]}",
           currency: order[:order_currency_code],
           exchange_rate: order[:store_to_order_rate],
-          comments: comments(order),
+          history_items: order[:status_history] && order[:status_history][:item],
           billing_address: address_magento_to_flowlink(order[:billing_address]),
           shipping_address: address_magento_to_flowlink(order[:shipping_address]),
           updated_at: upated_date.utc.iso8601,
@@ -348,18 +348,6 @@ module MagentoIntegration
       order_items.map do |item|
         item_magento_to_flowlink(item)
       end
-    end
-
-    def comments(order)
-      comments = []
-      hist_items = order[:status_history][:item]
-      unless hist_items.nil?
-        hist_items = [hist_items] unless hist_items.is_a?(Array)
-        hist_items.each do |h|
-          comments << h.fetch(:comment, '')
-        end
-      end
-      comments
     end
   end
 end
