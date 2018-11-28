@@ -16,9 +16,12 @@ module MagentoIntegration
 
       magento_orders.first(50).each do |magento_order|
         # Get order details
-        # soap_order_details = get_order_info_by_id(magento_order[:increment_id])
-        order = magento_order # merge_rest_order_details(soap_order_details)
-
+        order = magento_order
+        # If order has status history, it means it is using flowlink
+        # magento extension.
+        order = magento_order.merge(
+          get_order_info_by_id(magento_order[:increment_id])
+        ) unless magento_order[:status_history]
 
         # Get Customer Info
         # customer = get_customer_info_by_customer_id(order[:customer_id])
@@ -54,7 +57,7 @@ module MagentoIntegration
           customer_name: "#{order[:customer_firstname]} #{order[:customer_lastname]}",
           currency: order[:order_currency_code],
           exchange_rate: order[:store_to_order_rate],
-          comments: comments(order),
+          history_items: order[:status_history] && order[:status_history][:item],
           billing_address: address_magento_to_flowlink(order[:billing_address]),
           shipping_address: address_magento_to_flowlink(order[:shipping_address]),
           updated_at: upated_date.utc.iso8601,
@@ -345,18 +348,6 @@ module MagentoIntegration
       order_items.map do |item|
         item_magento_to_flowlink(item)
       end
-    end
-
-    def comments(order)
-      comments = []
-      hist_items = order[:status_history][:item]
-      unless hist_items.nil?
-        hist_items = [hist_items] unless hist_items.is_a?(Array)
-        hist_items.each do |h|
-          comments << h.fetch(:comment, '')
-        end
-      end
-      comments
     end
   end
 end
