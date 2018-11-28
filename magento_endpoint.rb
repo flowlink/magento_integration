@@ -30,6 +30,22 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
   before do
   end
 
+  post '/add_order' do
+    begin
+      order = MagentoIntegration::Order.new(@config)
+      status, order_id = product.add_order(@payload)
+
+      if status
+        result 200, "Successfully #{status} order #{order_id}"
+      else
+        result 500, 'Error while trying to send order to Magento'
+      end
+    rescue StandardError => e
+      puts e.backtrace
+      result 500, "Unable to send order to Magento. Error: #{e.message}"
+    end
+  end
+
   post '/get_orders' do
     begin
       order = MagentoIntegration::Order.new(@config)
