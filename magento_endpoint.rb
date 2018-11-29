@@ -32,8 +32,8 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
 
   post '/add_order' do
     begin
-      order = MagentoIntegration::Order.new(@config)
-      status, order_id = product.add_order(@payload)
+      status, order_id = MagentoIntegration::Order.new(@config)
+                                                  .add_order(@payload['order'])
 
       if status
         result 200, "Successfully #{status} order #{order_id}"

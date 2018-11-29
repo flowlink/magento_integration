@@ -5,23 +5,32 @@ require_relative '../utils/hash_tools.rb'
 
 module MagentoIntegration
   class Order < Base
-    KEYS_LIST_FROM_REST = [:coupon_code].freeze
+    def add_order(order_payload)
+      customer = get_customer_info_by_email(order_payload['email'])
+      customer = create_customer(order_payload) unless customer
+
+      ['created', 123]
+    end
+
+    def create_customer
+       raise 'no customer found'
+    end
 
     def get_orders
       flowlink_orders = []
 
       magento_orders = get_orders_since(@config[:since])
 
-      # magento_shipments = get_shipments
-
       magento_orders.first(50).each do |magento_order|
         # Get order details
         order = magento_order
         # If order has status history, it means it is using flowlink
         # magento extension.
-        order = magento_order.merge(
-          get_order_info_by_id(magento_order[:increment_id])
-        ) unless magento_order[:status_history]
+        unless magento_order[:status_history]
+          order = magento_order.merge(
+            get_order_info_by_id(magento_order[:increment_id])
+          )
+        end
 
         # Get Customer Info
         # customer = get_customer_info_by_customer_id(order[:customer_id])
@@ -34,10 +43,6 @@ module MagentoIntegration
         # TODO: Need to build 2 separate objects here:
         # - Invoice Array
         # - Payments Array
-        # payments = Array.new
-
-        # order_payments = convert_to_array(order[:payment])
-        # payment_method = (order_payments && order_payments.count) ? order_payments[0][:method] : 'no method'
 
         placed_date = Time.parse(order[:created_at]).utc.iso8601
         upated_date = Time.parse(order[:updated_at])
@@ -279,15 +284,15 @@ module MagentoIntegration
     end
 
     # TODO: Extract this method to a Magento::Customer class
-    def get_customer_info_by_customer_id(customer_id)
-      puts customer_id
-      response = soap_client.call(:customer_customer_info,
-                                  customer_id: customer_id)
+    def get_customer_info_by_email(email)
+      response = soap_client.call(:customer_customer_list,
+                                  filters('email', email))
 
-      body = response.body[:customer_customer_info_response][:customer_info]
-      return body if body.is_a?(Hash)
 
-      {}
+      customer = response.body[:customer_customer_list_response][:store_view] && response.body[:customer_customer_list_response][:store_view][:item]
+      return customer if customer
+
+      nil
     end
 
     def get_shipments
