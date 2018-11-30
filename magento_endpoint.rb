@@ -20,9 +20,6 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
     # copy stuff above over from another integration
   end
 
-  Honeybadger.configure do |config|
-  end
-
   error Savon::SOAPFault do
     result 500, env['sinatra.error'].to_s
   end
@@ -67,6 +64,32 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
       puts e.backtrace
       result 500, "Unable to get orders from Magento. Error: #{e.message}"
     end
+  end
+
+  post '/get_shipments' do
+    begin
+      shipments = MagentoIntegration::Shipment.new(@config).get_shipments
+
+      shipments.each { |s| add_object 'shipment', s }
+
+      # if @config[:create_shipment].to_i == 1
+      #   shipments = order.get_shipment_objects(orders)
+      #   shipments.each { |s| add_object 'shipment', s }
+      # end
+
+      line = shipments.count.positive? ? "Received #{shipments.count} #{'shipment'.pluralize shipments.count} from Magento" : 'No new/updated shipments found'
+
+      add_parameter 'since', (shipments.count == 50 ? shipments.last.updated_at : Time.now.utc.iso8601)
+
+      result 200, line
+    rescue StandardError => e
+      puts e.backtrace
+      result 500, "Unable to get shipments from Magento. Error: #{e.message}"
+    end
+  end
+
+  post '/get_products' do
+
   end
 
   post '/get_invoices' do
