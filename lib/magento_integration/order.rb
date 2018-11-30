@@ -12,7 +12,7 @@ module MagentoIntegration
       ['created', 123]
     end
 
-    def create_customer
+    def create_customer(order_payload)
        raise 'no customer found'
     end
 
@@ -46,7 +46,7 @@ module MagentoIntegration
 
         placed_date = Time.parse(order[:created_at]).utc.iso8601
         upated_date = Time.parse(order[:updated_at])
-        flownlink_order = {
+        flowlink_order = {
           created_at: placed_date,
           placed_on: placed_date,
           order_id: order[:order_id],
@@ -105,12 +105,12 @@ module MagentoIntegration
         }
 
         if soap_client.config[:connection_name]
-          flownlink_order[:channel] = soap_client.config[:connection_name]
-          flownlink_order[:source] = soap_client.config[:connection_name]
-          flownlink_order[:id] = format('%s-%s', soap_client.config[:connection_name], flownlink_order[:id])
+          flowlink_order[:channel] = soap_client.config[:connection_name]
+          flowlink_order[:source] = soap_client.config[:connection_name]
+          flowlink_order[:id] = format('%s-%s', soap_client.config[:connection_name], flowlink_order[:id])
         end
 
-        flowlink_orders.push(flownlink_order)
+        flowlink_orders.push(flowlink_order)
       end
 
       flowlink_orders
