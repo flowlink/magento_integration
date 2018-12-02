@@ -54,6 +54,7 @@ module MagentoIntegration
     end
 
     private
+
     # TODO: move this to the soap service
     def complex_filters(key, value_key, value_value)
       {
@@ -145,6 +146,5 @@ module MagentoIntegration
                                   complex_filters('updated_at', 'from', since))
       convert_to_array(response.body[:sales_order_invoice_list_response][:result][:item])
     end
-
   end
 end
