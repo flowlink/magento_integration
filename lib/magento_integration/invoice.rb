@@ -8,7 +8,7 @@ module MagentoIntegration
     def get_invoices
       magento_invoices = get_invoices_since(@config[:since])
       magento_invoices.map do |magento_invoice|
-        invoice_details = get_invoice_details_by_ship_id(magento_invoice[:increment_id])
+        invoice_details = get_invoices_details_by_id(magento_invoice[:increment_id])
         magento_invoice = magento_invoice.merge(invoice_details)
 
         magento_invoice[:invoice_increment_id] = magento_invoice[:increment_id]
@@ -132,7 +132,7 @@ module MagentoIntegration
       ).first
     end
 
-    def get_invoice_details_by_ship_id(increment_id)
+    def get_invoices_details_by_id(increment_id)
       response = soap_client.call(:sales_order_invoice_info,
                                   invoice_increment_id: increment_id)
       body = response.body[:sales_order_invoice_info_response][:result]
