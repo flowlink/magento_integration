@@ -89,7 +89,20 @@ class MagentoEndpoint < EndpointBase::Sinatra::Base
   end
 
   post '/get_products' do
+    begin
+      products = MagentoIntegration::Product.new(@config).get_products
 
+      products.each { |o| add_object 'product', o }
+
+      line = products.count.positive? ? "Received #{products.count} #{'product'.pluralize products.count} from Magento" : 'No  new/updated products found'
+
+      add_parameter 'since', Time.now.utc.iso8601
+
+      result 200, line
+    rescue StandardError => e
+      puts e.backtrace
+      result 500, "Unable to get products from Magento. Error: #{e.message}"
+    end
   end
 
   post '/get_invoices' do

@@ -1,227 +1,120 @@
+# frozen_string_literal: true
+
 require 'json'
-require 'active_support'
-require 'open-uri'
-require 'base64'
+require_relative '../utils/hash_tools.rb'
 
 module MagentoIntegration
   class Product < Base
+    def get_products
+      magento_products = get_products_since(@config[:since])
+      magento_products.map do |magento_product|
+        product_details = get_product_details_by_id(magento_product[:product_id])
+        magento_product = magento_product.merge(product_details)
 
-  def add_product(payload, update)
-    attribute_set = get_attribute_set
-    website = get_store
+        magento_product[:product_increment_id] = magento_product[:product_id]
 
-    wombat_product = {
-      :categories => payload[:product][:taxons],
-      'website_ids' => [[website[:website_id]]],
-      :name => payload[:product][:name],
-      :description => payload[:product][:description],
-      :status => 2,
-      :weight => 0,
-      :visibility => 4,
-      'tax_class_id' => 2,
-      'url_key' => payload[:product][:permalink],
-      :price => payload[:product][:price],
-      'meta_title' => payload[:product][:meta_title],
-      'meta_keyword' => payload[:product][:meta_keywords],
-      'meta_description' => payload[:product][:meta_description],
-    }
-
-    if payload[:product][:properties]
-      attributes = Array.new
-
-      payload[:product][:properties].each do |key, value|
-        attributes.push({
-          :key => key,
-          :value => value
-        })
+        Model.new(magento_product).to_flowlink_hash
       end
-      wombat_product['additional_attributes'] = {
-        'single_data' => [attributes]
-      }
     end
 
-    total = 0
+    class Model
+      def initialize(magento_product)
+        @magento_product = magento_product
+      end
 
-    if payload[:product][:variants]
-      payload[:product][:variants].each do |variant|
-        variant_product = wombat_product.clone
-        variant_product[:price] = variant[:price].to_f
-        if variant[:options]
-          attributes = Array.new
-
-          variant[:options].each do |key,value|
-            attributes.push({
-              :key => key,
-              :value => value
-            })
-          end
-
-          variant_product['additional_attributes'] = {
-            'single_data' => [attributes]
-          }
-        end
-
-        variant_product['stock_data'] = {
-          :qty => variant[:quantity],
-          'is_in_stock' => (variant[:quantity].to_f > 0) ? 1 : 0,
-          'use_config_manage_stock' => 1,
-          'use_config_min_qty' => 1,
-          'use_config_min_sale_qty' => 1,
-          'use_config_max_sale_qty' => 1,
-          'use_config_backorders' => 1,
-          'use_config_notify_stock_qty' => 1
+      def to_flowlink_hash
+        puts @magento_product
+        {
+          id:               @magento_product[:product_increment_id],
+          magento_id:       @magento_product[:product_id]
         }
-
-        if !update
-          result = soap_client.call :catalog_product_create, {
-            :type => 'simple',
-            :set => attribute_set[:set_id],
-            :sku => variant[:sku],
-            :product_data => variant_product
-          }
-          if result.body[:catalog_product_create_response][:result]
-            total += 1
-          end
-
-          add_images(variant[:sku], variant[:images].count > 0 ? variant[:images] : payload[:product][:images])
-        else
-          result = soap_client.call :catalog_product_update, {
-              :type => 'simple',
-              :product => variant[:sku],
-              :product_data => variant_product
-          }
-          if result.body[:catalog_product_update_response][:result]
-            total += 1
-          end
-        end
       end
-    else
-      wombat_product['stock_data'] = {
-        'use_config_manage_stock' => 1,
-        'use_config_min_qty' => 1,
-        'use_config_min_sale_qty' => 1,
-        'use_config_max_sale_qty' => 1,
-        'use_config_backorders' => 1,
-        'use_config_notify_stock_qty' => 1
-      }
-      if payload[:product][:quantity]
-        wombat_product['stock_data'][:qty] = payload[:product][:quantity].to_s
-        wombat_product['stock_data']['is_in_stock'] = (payload[:product][:quantity].to_f > 0) ? 1 : 0
-      end
-
-      add_new = !update
-
-      if update
-        begin
-          result = soap_client.call :catalog_product_update, {
-              :type => 'simple',
-              :product => payload[:product][:id], #product_id will be sku
-              :product_data => wombat_product
-          }
-          if result.body[:catalog_product_update_response][:result]
-            total += 1
-          end
-        rescue => e
-          if e.message.include? "101"
-            add_new = true
-          else
-            raise e.message
-          end
-        end
-      end
-
-      if add_new
-        result = soap_client.call :catalog_product_create, {
-            :type => 'simple',
-            :set => attribute_set[:set_id],
-            :sku => payload[:product][:id], #product_id will be sku
-            :product_data => wombat_product
-        }
-        if result.body[:catalog_product_create_response][:result]
-          total += 1
-        end
-      end
-
     end
-
-    return total
-  end
-
-	def set_inventory(payload)
-	  product = {
-	    'stock_data' => {
-		    :qty => payload[:inventory][:quantity]
-		  }
-	  }
-
-	  result = soap_client.call :catalog_product_update, {
-      :type => 'simple',
-      :product => payload[:inventory][:sku],
-      :product_data => product
-    }
-
-	  return result.body[:catalog_product_update_response][:result]
-	end
 
     private
 
-    def get_attribute_set
-      response = soap_client.call :catalog_product_attribute_set_list
-
-      attribute_sets = response.body[:catalog_product_attribute_set_list_response][:result][:item]
-
-      if attribute_sets.kind_of?(Array)
-        return attribute_sets[0]
-      else
-        return attribute_sets
-      end
+    # TODO: move this to the soap service
+    def complex_filters(key, value_key, value_value)
+      {
+        filters: {
+          '@xsi:type': 'ns1:filters',
+          'content!': {
+            'complex_filter' => {
+              '@SOAP-ENC:arrayType': 'ns1:complexFilter[1]',
+              '@xsi:type': 'ns1:complexFilterArray',
+              'content!': {
+                item: {
+                  '@xsi:type': 'ns1:complexFilter',
+                  'content!': {
+                    key: {
+                      '@xsi:type': 'xsd:string',
+                      'content!': key
+                    },
+                    value: {
+                      '@xsi:type': 'ns1:associativeEntity',
+                      'content!': {
+                        key: {
+                          '@xsi:type': 'xsd:string',
+                          'content!': value_key
+                        },
+                        value: {
+                          '@xsi:type': 'xsd:string',
+                          'content!': value_value
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     end
 
-    def get_store
-      response = soap_client.call :store_list
-
-      stores = response.body[:store_list_response][:stores][:item]
-
-      if stores.kind_of?(Array)
-        return stores[0]
-      else
-        return stores
-      end
+    # TODO: move this to the soap service
+    def filters(key, value)
+      {
+        filters: {
+          '@xsi:type': 'ns1:filters',
+          'content!': {
+            'filter' => {
+              '@SOAP-ENC:arrayType': 'ns1:associativeEntity[1]',
+              '@xsi:type': 'ns1:associativeArray',
+              'content!': {
+                item: {
+                  '@xsi:type': 'ns1:associativeEntity',
+                  'content!': {
+                    key: {
+                      '@xsi:type': 'xsd:string',
+                      'content!': key
+                    },
+                    value: {
+                      '@xsi:type': 'xsd:string',
+                      'content!': value
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     end
 
-    def add_images(product_sku, images)
-      if images.count == 0
-        return
-      end
+    def get_product_details_by_id(product)
+      response = soap_client.call(:catalog_product_info,
+                                  product_id: product)
+      body = response.body[:catalog_product_info_response][:result]
+      return body if body.is_a?(Hash)
 
-      data = Array.new
-      files = Array.new
+      {}
+    end
 
-      i = 0
-      images.each do |image|
-        data_str = open(image[:url])
-        image_base64 = Base64.encode64(data_str.read)
-
-        image_data = {
-          :file => {
-            :content => image_base64,
-            :mime => data_str.content_type,
-            :name => Digest::MD5.hexdigest(image[:url])
-          },
-          :label => '',
-          :position => i,
-          :types => (i == 0) ? ['image','small_image','thumbnail'] : [],
-          :exclude => 0
-        }
-
-        result = soap_client.call :catalog_product_attribute_media_create, {
-          :product => product_sku,
-          :data => [image_data]
-        }
-
-        puts result.body
-        i += 1
-      end
+    def get_products_since(since)
+      response = soap_client.call(:catalog_product_list,
+                                  complex_filters('updated_at', 'from', since))
+      convert_to_array(response.body[:catalog_product_list_response][:store_view][:item])
     end
   end
 end
