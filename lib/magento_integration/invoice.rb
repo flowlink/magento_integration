@@ -1,108 +1,150 @@
+# frozen_string_literal: true
+
 require 'json'
+require_relative '../utils/hash_tools.rb'
 
 module MagentoIntegration
   class Invoice < Base
-    attr_reader :magento_invoice
-    attr_reader :order
-
     def get_invoices
-      complex_filter = Hash.new
-      complex_filter['key'] = "updated_at"
-      complex_filter['value'] = {
-          :key => "from",
-          :value => @config[:since]
-      }
+      magento_invoices = get_invoices_since(@config[:since])
+      magento_invoices.map do |magento_invoice|
+        invoice_details = get_invoice_details_by_ship_id(magento_invoice[:increment_id])
+        magento_invoice = magento_invoice.merge(invoice_details)
 
-      invoices_response = soap_client.call :sales_order_invoice_list, {
-        :filters => {
-            'complex_filter' => [[complex_filter]]
+        magento_invoice[:invoice_increment_id] = magento_invoice[:increment_id]
+
+        order_details = get_order_info_by_id(magento_invoice[:order_id])
+        magento_invoice = magento_invoice.merge(order_details)
+
+        magento_invoice[:items] = convert_to_array(magento_invoice[:items][:item])
+        magento_invoice[:comments] = convert_to_array(magento_invoice[:comments] && magento_invoice[:comments][:item])
+
+        Model.new(magento_invoice).to_flowlink_hash
+      end
+    end
+
+    class Model
+      def initialize(magento_invoice)
+        @magento_invoice = magento_invoice
+      end
+
+      def to_flowlink_hash
+        puts @magento_invoice
+        {
+          id:               @magento_invoice[:invoice_increment_id],
+          magento_id:       @magento_invoice[:invoice_id]
+        }
+      end
+
+      def tracking_numbers
+        @magento_invoice[:tracks].map do |track|
+          track[:number]
+        end
+      end
+
+      def line_items_as_flowlink_hash
+        @magento_invoice[:items].map do |item|
+          {
+            sku: item[:sku],
+            quantity: item[:qty],
+            product_id: item[:product_id]
+          }
+        end
+      end
+    end
+
+    private
+    # TODO: move this to the soap service
+    def complex_filters(key, value_key, value_value)
+      {
+        filters: {
+          '@xsi:type': 'ns1:filters',
+          'content!': {
+            'complex_filter' => {
+              '@SOAP-ENC:arrayType': 'ns1:complexFilter[1]',
+              '@xsi:type': 'ns1:complexFilterArray',
+              'content!': {
+                item: {
+                  '@xsi:type': 'ns1:complexFilter',
+                  'content!': {
+                    key: {
+                      '@xsi:type': 'xsd:string',
+                      'content!': key
+                    },
+                    value: {
+                      '@xsi:type': 'ns1:associativeEntity',
+                      'content!': {
+                        key: {
+                          '@xsi:type': 'xsd:string',
+                          'content!': value_key
+                        },
+                        value: {
+                          '@xsi:type': 'xsd:string',
+                          'content!': value_value
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
-
-      flowlink_invoices = Array.new
-      order_ids = Array.new
-
-      magento_invoices = convert_to_array(invoices_response.body[:sales_order_invoice_list_response][:result][:item])
-      magento_invoices.each do |invoice|
-        invoiceResponse = soap_client.call :sales_order_invoice_info, { :invoice_increment_id => invoice[:increment_id] }
-        @magento_invoice = invoiceResponse.body[:sales_order_invoice_info_response][:result]
-
-        # Get Order
-        orderResponse = soap_client.call :sales_order_info, { :order_increment_id => @magento_invoice[:order_increment_id] }
-        @order = orderResponse.body[:sales_order_info_response][:result]
-
-        flowlink_invoice = to_flowlink_invoice
-
-        if soap_client.config[:connection_name]
-          flowlink_invoice[:channel] = soap_client.config[:connection_name]
-          flowlink_invoice[:source] = soap_client.config[:connection_name]
-          flowlink_invoice[:id] = sprintf("%s-%s", soap_client.config[:connection_name], flowlink_invoice[:id])
-        end
-
-        flowlink_invoices.push(flowlink_invoice)
-      end
-
-      flowlink_invoices
     end
 
-    def to_flowlink_invoice
+    # TODO: move this to the soap service
+    def filters(key, value)
       {
-        id: @magento_invoice[:increment_id],
-        created_at: Time.parse(@magento_invoice[:created_at]),
-        increment_id: @magento_invoice[:increment_id],
-        order_id: @magento_invoice[:order_id],
-        order_increment_id: @magento_invoice[:order_increment_id],
-        # shipping_date: # TODO: ***MR.S specific*** Perhaps we set this shipping date when we move a shipment over?? Otherwise it'll take between 2 and X API calls
-        exchange_rate: @order[:store_to_order_rate], # NOTE: ***MR.S specific***
-        shipping_amount: @magento_invoice[:shipping_amount],
-        comments: build_comments(convert_to_array(@magento_invoice[:comments])),
-        payments: build_payments(convert_to_array(@order[:payments])),
-        line_items: build_line_items(convert_to_array(@magento_invoice[:items][:item]))
+        filters: {
+          '@xsi:type': 'ns1:filters',
+          'content!': {
+            'filter' => {
+              '@SOAP-ENC:arrayType': 'ns1:associativeEntity[1]',
+              '@xsi:type': 'ns1:associativeArray',
+              'content!': {
+                item: {
+                  '@xsi:type': 'ns1:associativeEntity',
+                  'content!': {
+                    key: {
+                      '@xsi:type': 'xsd:string',
+                      'content!': key
+                    },
+                    value: {
+                      '@xsi:type': 'xsd:string',
+                      'content!': value
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     end
 
-    def build_comments(comments)
-      return [] if comments.empty?
-      flowlink_comments = Array.new
-
-      comments[0][:item].each do |comment|
-        flowlink_comments.push({
-          id: comment[:comment_id],
-          comment: comment[:comment],
-          created_at: Time.parse(comment[:created_at])
-        })
-      end
-      flowlink_comments
+    def get_order_info_by_id(order_id)
+      response = soap_client.call(:sales_order_list,
+                                  filters('order_id', order_id))
+      convert_to_array(
+        response.body[:sales_order_list_response][:result][:item]
+      ).first
     end
 
-    def build_payments(payments)
-      return [] if payments.empty?
-      flowlink_payments = Array.new
-      # payment_method = (payments && payments.count) ? payments[0][:method] : 'no method'
+    def get_invoice_details_by_ship_id(increment_id)
+      response = soap_client.call(:sales_order_invoice_info,
+                                  invoice_increment_id: increment_id)
+      body = response.body[:sales_order_invoice_info_response][:result]
+      return body if body.is_a?(Hash)
 
-      payments[0][:item].each do |payment|
-        # TODO: Map payments here
-        # flowlink_payments.push(payment)
-      end
-      flowlink_payments
+      {}
     end
 
-    def build_line_items(line_items)
-      flowlink_line_items = Array.new
-
-      line_items.each do |item|
-        flowlink_line_items.push({
-          name: item[:name],
-          quantity: item[:qty],
-          # description: zoho_description # TODO: ***MR.S specific*** Custom field from a product here
-          price: item[:price],
-          sku: item[:sku],
-          item_id: item[:item_id],
-          product_id: item[:product_id],
-          # discount_amount: # TODO: ***MR.S specific*** If the REST API returns a coupon code, then this is 0, otherwise, we need to use the discount on the item
-        })
-      end
-      flowlink_line_items
+    def get_invoices_since(since)
+      response = soap_client.call(:sales_order_invoice_list,
+                                  complex_filters('updated_at', 'from', since))
+      convert_to_array(response.body[:sales_order_invoice_list_response][:result][:item])
     end
+
   end
 end
