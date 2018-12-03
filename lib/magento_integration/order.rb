@@ -40,7 +40,7 @@ module MagentoIntegration
         shipments = get_shipment_info_by_order_id(magento_order[:order_id])
 
         placed_date = Time.parse(order[:created_at]).utc.iso8601
-        upated_date = Time.parse(order[:updated_at])
+        upated_date = Time.parse(order[:updated_at]).utc.iso8601
         flowlink_order = order.merge({
           created_at: placed_date,
           placed_on: placed_date,
@@ -97,7 +97,7 @@ module MagentoIntegration
           base_to_global_rate: order[:base_to_global_rate],
           base_to_order_rate: order[:base_to_order_rate],
           base_currency_code: order[:base_currency_code],
-          shipment_date: shipments.empty? ? nil : shipments.max_by{|h| h[:created_at]}[:created_at],
+          shipment_date: shipments.empty? ? nil : Time.parse(shipments.max_by{|h| h[:created_at]}[:created_at]).utc.iso8601,
           shipments: shipments,
           # invoices: invoices
         })
