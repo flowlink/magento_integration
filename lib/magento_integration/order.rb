@@ -32,8 +32,12 @@ module MagentoIntegration
           )
         end
 
+
         # Get Customer Info
         customer = get_customer_info_by_customer_id(order[:customer_id])
+
+        #Get shipment info
+        shipments = get_shipment_info_by_order_id(magento_order[:order_id])
 
         placed_date = Time.parse(order[:created_at]).utc.iso8601
         upated_date = Time.parse(order[:updated_at])
@@ -92,7 +96,8 @@ module MagentoIntegration
           base_to_global_rate: order[:base_to_global_rate],
           base_to_order_rate: order[:base_to_order_rate],
           base_currency_code: order[:base_currency_code],
-          # shipments: shipments,
+          shipment_date: shipments.empty? ? nil : shipments.max_by{|h| h[:created_at]}[:created_at],
+          shipments: shipments,
           # invoices: invoices
         }
 
