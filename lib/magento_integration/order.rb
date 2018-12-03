@@ -33,16 +33,7 @@ module MagentoIntegration
         end
 
         # Get Customer Info
-        # customer = get_customer_info_by_customer_id(order[:customer_id])
-
-        # Shipment Info
-        shipments = get_shipment_info_by_order_id(magento_order[:order_id])
-
-        invoices = get_invoice_info_by_order_id(magento_order[:order_id])
-
-        # TODO: Need to build 2 separate objects here:
-        # - Invoice Array
-        # - Payments Array
+        customer = get_customer_info_by_customer_id(order[:customer_id])
 
         placed_date = Time.parse(order[:created_at]).utc.iso8601
         upated_date = Time.parse(order[:updated_at])
@@ -60,6 +51,7 @@ module MagentoIntegration
           customer_firstname: order[:customer_firstname],
           customer_lastname: order[:customer_lastname],
           customer_name: "#{order[:customer_firstname]} #{order[:customer_lastname]}",
+          customer_group: customer && customer[:group_id],
           currency: order[:order_currency_code],
           exchange_rate: order[:store_to_order_rate],
           history_items: order[:status_history] && order[:status_history][:item],
@@ -100,8 +92,8 @@ module MagentoIntegration
           base_to_global_rate: order[:base_to_global_rate],
           base_to_order_rate: order[:base_to_order_rate],
           base_currency_code: order[:base_currency_code],
-          shipments: shipments,
-          invoices: invoices
+          # shipments: shipments,
+          # invoices: invoices
         }
 
         if soap_client.config[:connection_name]
@@ -281,6 +273,14 @@ module MagentoIntegration
       response = soap_client.call(:sales_order_info,
                                   order_increment_id: increment_id)
       response.body[:sales_order_info_response][:result]
+    end
+
+    def get_customer_info_by_customer_id(customer_id)
+      return unless customer_id
+
+      response = soap_client.call(:customer_customer_info,
+                                  customer_id: customer_id)
+      response.body[:customer_customer_info_response][:customer_info]
     end
 
     # TODO: Extract this method to a Magento::Customer class
