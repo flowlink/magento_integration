@@ -31,25 +31,14 @@ module MagentoIntegration
       def to_flowlink_hash
         puts @magento_invoice
         {
-          id:               @magento_invoice[:invoice_increment_id],
-          magento_id:       @magento_invoice[:invoice_id]
+          id:                  @magento_invoice[:invoice_increment_id],
+          magento_id:          @magento_invoice[:invoice_id],
+          is_active:           @magento_invoice[:is_active],
+          store_to_order_rate: @magento_invoice[:store_to_order_rate],
+          shipping_amount:     @magento_invoice[:shipping_amount],
+          comments:            @magento_invoice[:comments],
+          line_items:          @magento_invoice[:items]
         }
-      end
-
-      def tracking_numbers
-        @magento_invoice[:tracks].map do |track|
-          track[:number]
-        end
-      end
-
-      def line_items_as_flowlink_hash
-        @magento_invoice[:items].map do |item|
-          {
-            sku: item[:sku],
-            quantity: item[:qty],
-            product_id: item[:product_id]
-          }
-        end
       end
     end
 
