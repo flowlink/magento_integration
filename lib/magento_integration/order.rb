@@ -56,6 +56,7 @@ module MagentoIntegration
           customer_lastname: order[:customer_lastname],
           customer_name: "#{order[:customer_firstname]} #{order[:customer_lastname]}",
           customer_group: customer && customer[:group_id],
+          customer: customer,
           currency: order[:order_currency_code],
           exchange_rate: order[:store_to_order_rate],
           history_items: order[:status_history] && order[:status_history][:item],
