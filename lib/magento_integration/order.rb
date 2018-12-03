@@ -41,7 +41,7 @@ module MagentoIntegration
 
         placed_date = Time.parse(order[:created_at]).utc.iso8601
         upated_date = Time.parse(order[:updated_at])
-        flowlink_order = {
+        flowlink_order = order.merge({
           created_at: placed_date,
           placed_on: placed_date,
           order_id: order[:order_id],
@@ -99,7 +99,7 @@ module MagentoIntegration
           shipment_date: shipments.empty? ? nil : shipments.max_by{|h| h[:created_at]}[:created_at],
           shipments: shipments,
           # invoices: invoices
-        }
+        })
 
         if soap_client.config[:connection_name]
           flowlink_order[:channel] = soap_client.config[:connection_name]
