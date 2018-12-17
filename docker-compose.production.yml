@@ -1,0 +1,23 @@
+version: "2"
+
+services:
+  magento-integration:
+    container_name: magento-integration-container
+    build: .
+    environment:
+      - VIRTUAL_HOST=magento_integration.flowlink.io
+      - RAILS_ENV=production
+      - URL=***
+      - API_KEY=***
+      - API_PASSWORD=***
+      - API_USERNAME=***
+      - REST_KEY=***
+      - REST=***
+    logging:
+      driver: gcplogs
+    network_mode: bridge
+    restart: always
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app
