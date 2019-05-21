@@ -1,4 +1,4 @@
-FROM rlister/ruby:2.4.2
+FROM ruby:2.4.2-slim-stretch
 MAINTAINER Ric Lister <ric@spreecommerce.com>
 
 RUN apt-get update && \
@@ -14,7 +14,6 @@ ADD ./Gemfile /tmp/
 ADD ./Gemfile.lock /tmp/
 
 RUN bundle install
-RUN rm -f /tmp/Gemfile /tmp/Gemfile.lock
 
 WORKDIR /app
 ADD ./ /app
